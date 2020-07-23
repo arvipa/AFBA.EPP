@@ -4,6 +4,7 @@ from django.http.response import JsonResponse
 from .models import EppAction, EppProduct, EppGrppymntmd, EppErrormessage, EppGrpmstr
 from .serializers import EppActionSerializer, EppProductSerializer, EppGrppymntmdSerializer, EppErrormessageSerializer, \
     EppGrpmstrSerializer
+from rest_framework import status, generics
 
 
 class EppActionList(APIView):
@@ -102,3 +103,10 @@ class EppGrpmstrList(APIView):
         data = EppGrpmstrSerializer(grouppy_data, many=True).data
         return Response(data)
 
+
+class EppGrpmstrPostList(generics.ListAPIView):
+    serializer_class = EppGrpmstrSerializer
+
+    def get_queryset(self):
+        group_nbr = self.kwargs['grpNbr']
+        return EppGrpmstr.objects.filter(grp_nbr=group_nbr)

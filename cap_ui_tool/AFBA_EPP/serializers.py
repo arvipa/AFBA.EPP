@@ -53,3 +53,13 @@ class EppGrpmstrSerializer(serializers.ModelSerializer):
     class Meta:
         model = EppGrpmstr
         fields = ('grpId', 'grpNbr', 'grpNm')
+
+
+class EppGrpmstrPostSerializers(serializers.ModelSerializer):
+    grpId = serializers.IntegerField(source='grp_id')
+    grpNbr = serializers.CharField(source='grp_nbr')
+    grpNm = serializers.CharField(source='grp_nm')
+
+    class Meta:
+        model = EppGrpmstr
+        fields = ('grpId', 'grpNbr', 'grpNm')
