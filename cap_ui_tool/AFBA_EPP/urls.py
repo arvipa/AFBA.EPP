@@ -9,5 +9,5 @@ urlpatterns = [
     path("Lookup/LookupsData/", SitusStateSerializerList.as_view(), name="SitusState_list"),
     # path("ErorrMessage/GetErrorMessages", EppErrormessageList.as_view(), name="Error_list"),
     path("GroupSetup/GetGroupsData", EppGrpmstrList.as_view(), name="GroupPayment_list"),
-    path("GroupSetup/grpNbr/<str:grpNbr>/", EppGrpmstrPostList.as_view(), name="GroupPayment_list")
+    path("GroupSetup/grpNbr/<str:grpNbr>/", EppGrpmstrPostList.as_view(), name="GroupPayment_list"),
 ]

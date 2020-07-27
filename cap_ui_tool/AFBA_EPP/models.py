@@ -14,7 +14,7 @@ class EppAgents(models.Model):
     agnt_nm = models.CharField(max_length=50, blank=True, null=True)
     agnt_sub_cnt = models.CharField(max_length=50, blank=True, null=True)
     agnt_comsn_splt = models.DecimalField(max_digits=3, decimal_places=0, blank=True, null=True)
-    grp = models.ForeignKey('EppGrpmstr', models.DO_NOTHING)
+    grp = models.ForeignKey('EppGrpmstr', related_name='grpAgents', on_delete=models.CASCADE)
     crtd_dt = models.DateField()
     crtd_by = models.CharField(max_length=10)
     lst_updt_dt = models.DateField(blank=True, null=True)
@@ -182,8 +182,8 @@ class EppGrpmstr(models.Model):
     grp_efftv_dt = models.DateField()
     grp_situs_st = models.CharField(max_length=10, blank=True, null=True)
     actv_flg = models.CharField(max_length=1, blank=True, null=True)
-    grppymn = models.ForeignKey('EppGrppymntmd', models.DO_NOTHING, db_column='grpPymn_id')  # Field name made lowercase.
-    enrlmnt_prtnrs = models.ForeignKey(EppEnrlmntPrtnrs, models.DO_NOTHING)
+    grppymn = models.ForeignKey('EppGrppymntmd', related_name='grppymn', on_delete=models.CASCADE, db_column='grpPymn_id')  # Field name made lowercase.
+    enrlmnt_prtnrs = models.ForeignKey('EppEnrlmntPrtnrs',  related_name='enrlmntprtnrs', on_delete=models.CASCADE)
     crtd_dt = models.DateField()
     crtd_by = models.CharField(max_length=10)
     lst_updt_dt = models.DateField(blank=True, null=True)
