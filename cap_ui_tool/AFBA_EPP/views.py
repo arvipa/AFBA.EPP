@@ -2,11 +2,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http.response import JsonResponse
 from .models import EppAction, EppProduct, EppGrppymntmd, EppErrormessage, EppGrpmstr, \
-    EppGrpprdct, EppBulkreftbl, EppAttribute
+    EppGrpprdct, EppBulkreftbl, EppAttribute, EppEnrlmntPrtnrs
 from .serializers import EppActionSerializer, EppProductSerializer, EppGrppymntmdSerializer, EppErrormessageSerializer, \
-    EppGrpmstrSerializer, EppGrpmstrPostSerializers
+    EppGrpmstrSerializer, EppGrpmstrPostSerializers, EppCrtGrpmstrSerializer, EppGrpAgentSerializer
 from rest_framework import status, generics
-
+import random as rand
+from datetime import datetime, timezone
 
 class EppActionList(APIView):
     def get(self, request):
@@ -105,6 +106,13 @@ class EppGrpmstrList(APIView):
         return Response(data)
 
 
+class EppGrpagentList(APIView):
+    def get(self, request):
+        grouppy_data = EppGrpmstr.objects.all()
+        data = EppGrpAgentSerializer(grouppy_data, many=True).data
+        return Response(data)
+
+
 class EppGrpmstrPostList(generics.ListAPIView):
     # serializer_class = EppGrpmstrPostSerializers
     #
@@ -134,6 +142,56 @@ class EppGrpmstrPostList(generics.ListAPIView):
                 prd_attr_data = EppAttribute.objects.filter(attr_id=blk_dat['attr_id'])
                 prd_attr_list = list(prd_attr_data.values())
                 db_attr_name = prd_attr_list[0]['db_attr_nm']
-                db_attr_value =blk_dat['value']
+                print("------db_attr_name----", db_attr_name + "_action")
+                db_attr_name_action = db_attr_name + "_action"
+                db_attr_value = blk_dat['value']
+                db_attr_value_action = blk_dat['action_id']
                 return_data[0].setdefault(pr_key, {}).update({db_attr_name: db_attr_value})
+                return_data[0].setdefault(pr_key, {}).update({db_attr_name_action: db_attr_value_action})
         return Response(return_data)
+
+
+class DateRand:
+    def randgen(self):
+        today = self.getCurntUtcTime()
+        return str(rand.randint(1, 99999)) + today.strftime('%m%d') + '0' + today.strftime('%y') + today.strftime('%H%M%S')
+
+    def getCurntUtcTime(self):
+        return datetime.now(timezone.utc)
+
+
+class EppCreateGrpList(generics.CreateAPIView):
+    serializer_class = EppCrtGrpmstrSerializer
+    serializer_agent = EppGrpAgentSerializer
+
+    def post(self, request):
+        f1 = DateRand()
+        todayDt = f1.getCurntUtcTime()
+        grpNumberRandom = f1.randgen()
+
+        if not (EppGrppymntmd.objects.filter(grppymn_id=request.data['grpPymn']).exists()):
+            pymntmthd = EppGrppymntmd(grppymn_id=request.data['grpPymn'], grp_pymnt_md_cd='', grp_pymnt_md_nm='',\
+                                       crtd_dt=todayDt.strftime('%Y-%m-%d'),crtd_by='Batch',lst_updt_dt=todayDt.strftime('%Y-%m-%d'),\
+                                       lst_updt_by='Batch')
+            pymntmthd.save()
+            print(status)
+            pymnt_fk = EppGrppymntmd.objects.get(pk=request.data['grpPymn'])
+        else:
+            pymnt_fk = EppGrppymntmd.objects.get(pk=request.data['grpPymn'])
+        print(pymnt_fk)
+        enrollment_fk = EppEnrlmntPrtnrs.objects.get(pk=request.data['enrlmntPrtnrsId'])
+        print('Before fk')
+        request.data['crtdBy'] = 'Batch'
+        request.data['grpId'] = grpNumberRandom
+        request.data['crtdDt'] =todayDt.strftime('%Y-%m-%d')
+        request.data['lstUpdtDt'] =todayDt.strftime('%Y-%m-%d')
+        request.data['lstUpdtBy'] = 'Batch'
+        grp_mastr = EppGrpmstr(grppymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk)
+        serializer = EppCrtGrpmstrSerializer(grp_mastr, data=request.data)
+        print(request.data['crtdDt'])
+        print(request.data)
+        print(serializer)
+        if serializer.is_valid():
+            serializer.save()
+            return Response("Group No. " + str(request.data['grpNbr']) + " updated sucessfully!", status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
