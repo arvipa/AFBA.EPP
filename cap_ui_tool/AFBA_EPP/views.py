@@ -1,7 +1,8 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http.response import JsonResponse
-from .models import EppAction, EppProduct, EppGrppymntmd, EppErrormessage, EppGrpmstr
+from .models import EppAction, EppProduct, EppGrppymntmd, EppErrormessage, EppGrpmstr, \
+    EppGrpprdct, EppBulkreftbl, EppAttribute
 from .serializers import EppActionSerializer, EppProductSerializer, EppGrppymntmdSerializer, EppErrormessageSerializer, \
     EppGrpmstrSerializer, EppGrpmstrPostSerializers
 from rest_framework import status, generics
@@ -105,8 +106,34 @@ class EppGrpmstrList(APIView):
 
 
 class EppGrpmstrPostList(generics.ListAPIView):
-    serializer_class = EppGrpmstrPostSerializers
-
-    def get_queryset(self):
+    # serializer_class = EppGrpmstrPostSerializers
+    #
+    # def get_queryset(self):
+    #     group_nbr = self.kwargs['grpNbr']
+    #     return EppGrpmstr.objects.filter(grp_nbr=group_nbr)
+    def get(self, request, grpNbr):
+        # Get Group data
         group_nbr = self.kwargs['grpNbr']
-        return EppGrpmstr.objects.filter(grp_nbr=group_nbr)
+        group_data = EppGrpmstr.objects.filter(grp_nbr=group_nbr).select_related()
+        group_dict = list(group_data.values())[0]
+        return_data = EppGrpmstrPostSerializers(group_data, many=True).data
+        # Using group_id from group data dict get all group products.
+        grp_prd_data = EppGrpprdct.objects.filter(grp=group_dict['grp_id']).prefetch_related('eppproduct')
+        grp_prod_lst = list(grp_prd_data.values())
+        # Use loop to add product and its bulk data and attributes in return data.
+        for grprd_data in grp_prod_lst:
+            prd_data = EppProduct.objects.filter(product_id=grprd_data['product_id'])
+            prd_dict = list(prd_data.values())[0]
+            # print("prd_dict >>> ", prd_dict)
+            pr_key = prd_dict['product_nm'].lower()
+            return_data[0].setdefault(pr_key, {})
+            bulk_data = EppBulkreftbl.objects.filter(grpprdct=grprd_data['grpprdct_id'])
+            bulk_data_lst = list(bulk_data.values())
+            for blk_dat in bulk_data_lst:
+                # print(blk_dat)
+                prd_attr_data = EppAttribute.objects.filter(attr_id=blk_dat['attr_id'])
+                prd_attr_list = list(prd_attr_data.values())
+                db_attr_name = prd_attr_list[0]['db_attr_nm']
+                db_attr_value =blk_dat['value']
+                return_data[0].setdefault(pr_key, {}).update({db_attr_name: db_attr_value})
+        return Response(return_data)
