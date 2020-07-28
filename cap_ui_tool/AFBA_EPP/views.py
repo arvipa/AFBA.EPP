@@ -8,6 +8,8 @@ from .serializers import EppActionSerializer, EppProductSerializer, EppGrppymntm
 from rest_framework import status, generics
 import random as rand
 from datetime import datetime, timezone
+from AFBA_EPP.config import PRODUCTS
+from AFBA_EPP.utils import add_product_attr
 
 class EppActionList(APIView):
     def get(self, request):
@@ -135,6 +137,9 @@ class EppGrpmstrPostList(generics.ListAPIView):
             # print("prd_dict >>> ", prd_dict)
             pr_key = prd_dict['product_nm'].lower()
             return_data[0].setdefault(pr_key, {})
+            # From configuration get all attributes required within the product.
+            prd_attr_conf = PRODUCTS.get(pr_key, ())
+            add_product_attr(return_data, pr_key, prd_attr_conf)
             bulk_data = EppBulkreftbl.objects.filter(grpprdct=grprd_data['grpprdct_id'])
             bulk_data_lst = list(bulk_data.values())
             for blk_dat in bulk_data_lst:
@@ -142,12 +147,11 @@ class EppGrpmstrPostList(generics.ListAPIView):
                 prd_attr_data = EppAttribute.objects.filter(attr_id=blk_dat['attr_id'])
                 prd_attr_list = list(prd_attr_data.values())
                 db_attr_name = prd_attr_list[0]['db_attr_nm']
-                print("------db_attr_name----", db_attr_name + "_action")
-                db_attr_name_action = db_attr_name + "_action"
                 db_attr_value = blk_dat['value']
-                db_attr_value_action = blk_dat['action_id']
                 return_data[0].setdefault(pr_key, {}).update({db_attr_name: db_attr_value})
-                return_data[0].setdefault(pr_key, {}).update({db_attr_name_action: db_attr_value_action})
+                db_attr_value_action = blk_dat['action_id']
+                if db_attr_name.find("_action") > 1:
+                    return_data[0].setdefault(pr_key, {}).update({db_attr_name: db_attr_value_action})
         return Response(return_data)
 
 
