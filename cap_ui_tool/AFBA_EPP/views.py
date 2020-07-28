@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http.response import JsonResponse
 from .models import EppAction, EppProduct, EppGrppymntmd, EppErrormessage, EppGrpmstr, \
-    EppGrpprdct, EppBulkreftbl, EppAttribute, EppEnrlmntPrtnrs
+    EppGrpprdct, EppBulkreftbl, EppAttribute, EppEnrlmntPrtnrs,EppAgents
 from .serializers import EppActionSerializer, EppProductSerializer, EppGrppymntmdSerializer, EppErrormessageSerializer, \
     EppGrpmstrSerializer, EppGrpmstrPostSerializers, EppCrtGrpmstrSerializer, EppGrpAgentSerializer
 from rest_framework import status, generics
@@ -126,7 +126,7 @@ class EppGrpmstrPostList(generics.ListAPIView):
         group_nbr = self.kwargs['grpNbr']
         group_data = EppGrpmstr.objects.filter(grp_nbr=group_nbr).select_related()
         group_dict = list(group_data.values())[0]
-        return_data = EppGrpmstrPostSerializers(group_data, many=True).data
+        return_data = EppGrpmstrcdPostSerializers(group_data, many=True).data
         # Using group_id from group data dict get all group products.
         grp_prd_data = EppGrpprdct.objects.filter(grp=group_dict['grp_id']).prefetch_related('eppproduct')
         grp_prod_lst = list(grp_prd_data.values())
@@ -166,36 +166,74 @@ class DateRand:
 
 class EppCreateGrpList(generics.CreateAPIView):
     serializer_class = EppCrtGrpmstrSerializer
-    serializer_agent = EppGrpAgentSerializer
 
     def post(self, request):
         f1 = DateRand()
         todayDt = f1.getCurntUtcTime()
         grpNumberRandom = f1.randgen()
-
-        if not (EppGrppymntmd.objects.filter(grppymn_id=request.data['grpPymn']).exists()):
-            pymntmthd = EppGrppymntmd(grppymn_id=request.data['grpPymn'], grp_pymnt_md_cd='', grp_pymnt_md_nm='',\
-                                       crtd_dt=todayDt.strftime('%Y-%m-%d'),crtd_by='Batch',lst_updt_dt=todayDt.strftime('%Y-%m-%d'),\
-                                       lst_updt_by='Batch')
-            pymntmthd.save()
-            print(status)
+        if EppGrppymntmd.objects.filter(pk=request.data['grpPymn']).exists():
             pymnt_fk = EppGrppymntmd.objects.get(pk=request.data['grpPymn'])
         else:
-            pymnt_fk = EppGrppymntmd.objects.get(pk=request.data['grpPymn'])
-        print(pymnt_fk)
+            return Response("grpPymn {} is not present in EppGrppymntmd".format(request.data['grpPymn']), status=status.HTTP_400_BAD_REQUEST)
+        request.data['enrlmntPrtnrsId'] = self.validateEnrlmnt(request.data)
         enrollment_fk = EppEnrlmntPrtnrs.objects.get(pk=request.data['enrlmntPrtnrsId'])
-        print('Before fk')
         request.data['crtdBy'] = 'Batch'
         request.data['grpId'] = grpNumberRandom
         request.data['crtdDt'] =todayDt.strftime('%Y-%m-%d')
         request.data['lstUpdtDt'] =todayDt.strftime('%Y-%m-%d')
         request.data['lstUpdtBy'] = 'Batch'
+        print(request.data['grpEfftvDt'])
         grp_mastr = EppGrpmstr(grppymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk)
         serializer = EppCrtGrpmstrSerializer(grp_mastr, data=request.data)
-        print(request.data['crtdDt'])
-        print(request.data)
-        print(serializer)
         if serializer.is_valid():
-            serializer.save()
-            return Response("Group No. " + str(request.data['grpNbr']) + " updated sucessfully!", status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            print("serializer valid")
+            try:
+               grpMstrMthd = EppGrpmstr(grp_id=request.data['grpId'], grp_nbr=request.data['grpNbr'],\
+                                        grp_nm=request.data['grpNm'],grp_efftv_dt=request.data['grpEfftvDt'], \
+                                        grp_situs_st=request.data['grpSitusSt'], actv_flg=request.data['actvFlg'], \
+                                        grppymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk,\
+                                        crtd_dt= request.data['crtdDt'],crtd_by= request.data['crtdBy'],\
+                                        lst_updt_dt=request.data['lstUpdtDt'],lst_updt_by=request.data['lstUpdtBy'],\
+                                        occ_class=request.data['occClass'],acct_mgr_nm=request.data['acctMgrNm'],\
+                                        acct_mgr_email_addrs=request.data['acctMgrEmailAddrs'],\
+                                        usr_tkn=request.data['acctMgrEmailAddrs'],case_tkn=request.data['acctMgrEmailAddrs'])
+               grpMstrMthd.save()
+               print("Before Agent Creation")
+               self.AddAgentDet(request.data)
+               return Response("Group No. " + str(request.data['grpNbr']) + " updated sucessfully!",
+                        status=status.HTTP_200_OK)
+            except Exception:
+                return Response("Error while inserting into Erpgrpmstr", status=status.HTTP_400_BAD_REQUEST)
+        return Response("Error", status=status.HTTP_400_BAD_REQUEST)
+
+
+    def AddAgentDet(self,data):
+        try:
+            grpId_fk = EppGrpmstr.objects.get(pk=data['grpId'])
+            Agentmthd = EppAgents(agent_id=data['grpAgents'][0]['agentId'],agnt_nbr =data['grpAgents'][0]['agntNbr'], \
+                              agnt_nm=data['grpAgents'][0]['agntNm'], agnt_sub_cnt=data['grpAgents'][0]['agntSubCnt'],\
+                              agnt_comsn_splt=data['grpAgents'][0]['agntComsnSplt'],grp=grpId_fk,\
+                              crtd_dt=data['crtdDt'], crtd_by=data['crtdBy'])
+            Agentmthd.save()
+
+        except Exception:
+            return Response("Error while inserting into EppAgents", status=status.HTTP_400_BAD_REQUEST)
+
+    def validateEnrlmnt(self,data):
+        try:
+            f2 = DateRand()
+            if EppEnrlmntPrtnrs.objects.filter(eml_addrss=data['emlAddrss']).exists():
+                enrldict = EppEnrlmntPrtnrs.objects.filter(eml_addrss=data['emlAddrss']).values('enrlmnt_prtnrs_id')
+                enrlmntRandom=enrldict[0]['enrlmnt_prtnrs_id']
+            else:
+                enrlmntRandom = f2.randgen()
+                enrlmntmthd = EppEnrlmntPrtnrs(enrlmnt_prtnrs_id=enrlmntRandom, enrlmnt_prtnrs_nm=data['enrlmntPrtnrsNm'], \
+                                       cntct_nm='', eml_addrss=data['emlAddrss'],
+                                       phn_nbr='',crtd_dt=data['crtdDt'], crtd_by=data['crtdBy'],
+                                       lst_updt_dt=data['lstUpdtDt'], \
+                                       lst_updt_by=data['lstUpdtBy'])
+                enrlmntmthd.save()
+            return enrlmntRandom
+
+        except Exception:
+            return Response("Error while inserting into EppEnrlmntPrtnrs", status=status.HTTP_400_BAD_REQUEST)
