@@ -1,2 +1,8 @@
-# Ignore Pycharm directory
+# Ignore __pycache__ directories.
+__pycache__/
+
+#Ignore PYC files.
+ *.pyc
+ 
+# Ignore Pycharm directory.
 *.idea
