@@ -179,7 +179,7 @@ class EppGrpmstr(models.Model):
     grp_id = models.BigIntegerField(primary_key=True)
     grp_nbr = models.CharField(max_length=100, blank=True, null=True)
     grp_nm = models.CharField(max_length=100, blank=True, null=True)
-    grp_efftv_dt = models.DateField()
+    grp_efftv_dt = models.DateTimeField()
     grp_situs_st = models.CharField(max_length=10, blank=True, null=True)
     actv_flg = models.CharField(max_length=1, blank=True, null=True)
     grppymn = models.ForeignKey('EppGrppymntmd', related_name='grppymn', on_delete=models.CASCADE, db_column='grpPymn_id')  # Field name made lowercase.

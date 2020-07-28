@@ -102,7 +102,7 @@ class EppGrpAgentSerializer(serializers.ModelSerializer):
     agntNm = serializers.CharField(source='agnt_nm')
     agntSubCnt = serializers.CharField(source='agnt_sub_cnt')
     agntComsnSplt = serializers.IntegerField(source='agnt_comsn_splt')
-    grpId = serializers.PrimaryKeyRelatedField(queryset=EppGrppymntmd.objects.all())
+    grpId = serializers.PrimaryKeyRelatedField(allow_null=True,queryset=EppGrpmstr.objects.all())
 
     class Meta:
         model = EppAgents
@@ -121,7 +121,7 @@ class EppCrtGrpmstrSerializer(serializers.ModelSerializer):
     grpSitusSt = serializers.CharField(source='grp_situs_st')
     actvFlg = serializers.CharField(source='actv_flg')
     enrlmntPrtnrsId = serializers.PrimaryKeyRelatedField(queryset=EppEnrlmntPrtnrs.objects.all())
-    crtdDt = serializers.DateField(source='crtd_dt')
+    crtdDt = serializers.DateField(source='crtd_dt',read_only=True)
     crtdBy = serializers.CharField(source='crtd_by', read_only=True)
     lstUpdtDt = serializers.DateField(source='lst_updt_dt', read_only=True)
     lstUpdtBy = serializers.CharField(source='lst_updt_by', read_only=True)
@@ -136,3 +136,5 @@ class EppCrtGrpmstrSerializer(serializers.ModelSerializer):
         fields = ('grpId', 'grpNbr', 'grpNm', 'grpEfftvDt', 'grpSitusSt', 'actvFlg', 'occClass', 'grpPymn',
                   'enrlmntPrtnrsId', 'crtdDt', 'crtdBy', 'lstUpdtDt', 'lstUpdtBy', 'grpAgents', 'acctMgrNm',
                   'acctMgrEmailAddrs', 'user_token', 'case_token')
+
+
