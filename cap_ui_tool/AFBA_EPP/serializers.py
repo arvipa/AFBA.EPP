@@ -125,6 +125,7 @@ class EppCrtGrpmstrSerializer(serializers.ModelSerializer):
     crtdBy = serializers.CharField(source='crtd_by', read_only=True)
     lstUpdtDt = serializers.DateField(source='lst_updt_dt', read_only=True)
     lstUpdtBy = serializers.CharField(source='lst_updt_by', read_only=True)
+    enrlmntPrtnrsNm = serializers.CharField(source='enrlmnt_prtnrs_nm', read_only=True)
     occClass = serializers.IntegerField(source='occ_class')
     acctMgrNm = serializers.CharField(source='acct_mgr_nm')
     acctMgrEmailAddrs = serializers.CharField(source='acct_mgr_email_addrs')
