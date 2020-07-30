@@ -207,6 +207,39 @@ class EppCreateGrpList(generics.CreateAPIView):
                         self.AddAgentDet(request.data,i)
                 i=i+1
 
+            print("Before grpprdct logic")
+
+            if EppGrpprdct.objects.filter(grp=request.data['grpId']).exists():
+                grp_lst = list(EppGrpprdct.objects.filter(grp=request.data['grpId']).values())
+                for grpprd_data in grp_lst:
+                    print(grpprd_data)
+                    print("grp product_Id : ", grpprd_data['product_id'])
+                    print("grp grp_id: ", grpprd_data['grp_id'])
+                    print("grp effctv_dt: ", grpprd_data['effctv_dt'])
+               #     prd = EppGrpprdct.objects.select_related('product').get(grp=grpprd_data['grp_id'])
+               #     print(prd)
+               #     print(prd.product.product_nm)
+               #     print(prd.product.product_id)
+                    prd_data = EppProduct.objects.filter(product_id=grpprd_data['product_id'])
+                    prd_lst = list(prd_data.values())[0]
+                 #   prd_lst = list(EppProduct.objects.filter(product_id=grpprd_data['product_id']))
+                    print(prd_lst['product_id'])
+                    print(prd_lst['product_nm'])
+                    pr_key = prd_lst['product_nm'].lower()
+                    prd_attr_conf = PRODUCTS.get(pr_key, ())
+                    print(prd_attr_conf)
+                    blkData = list(EppBulkreftbl.objects.filter(grpprdct=grpprd_data['grpprdct_id']).values())
+                    for blk_data in blkData:
+                        print("bulk_id: ",blk_data['bulk_id'])
+                        print("grpprdct_id: ", blk_data['grpprdct_id'])
+                        print("value: ", blk_data['value'])
+                        print("attr_id: ", blk_data['attr_id'])
+                        print("action_id: ", blk_data['action_id'])
+                        prd_attr_data = list(EppAttribute.objects.filter(attr_id=blk_data['attr_id']).values())
+                        for attr_data in prd_attr_data:
+                            print('db_attr_nm: ',attr_data['db_attr_nm'])
+                            print('db_attr_value: ',blk_data['value'])
+
             return Response("Group No. " + str(request.data['grpNbr']) + " updated sucessfully!",
                         status=status.HTTP_200_OK)
 
