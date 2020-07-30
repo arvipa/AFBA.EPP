@@ -128,7 +128,7 @@ class EppGrpmstrPostList(generics.ListAPIView):
         group_nbr = self.kwargs['grpNbr']
         group_data = EppGrpmstr.objects.filter(grp_nbr=group_nbr).select_related()
         group_dict = list(group_data.values())[0]
-        return_data = EppGrpmstrcdPostSerializers(group_data, many=True).data
+        return_data = EppGrpmstrPostSerializers(group_data, many=True).data
         # Using group_id from group data dict get all group products.
         grp_prd_data = EppGrpprdct.objects.filter(grp=group_dict['grp_id']).prefetch_related('eppproduct')
         grp_prod_lst = list(grp_prd_data.values())
