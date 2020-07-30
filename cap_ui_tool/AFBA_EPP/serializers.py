@@ -136,6 +136,6 @@ class EppCrtGrpmstrSerializer(serializers.ModelSerializer):
         model = EppGrpmstr
         fields = ('grpId', 'grpNbr', 'grpNm', 'grpEfftvDt', 'grpSitusSt', 'actvFlg', 'occClass', 'grpPymn',
                   'enrlmntPrtnrsId', 'crtdDt', 'crtdBy', 'lstUpdtDt', 'lstUpdtBy', 'grpAgents', 'acctMgrNm',
-                  'acctMgrEmailAddrs', 'user_token', 'case_token')
+                  'acctMgrEmailAddrs', 'user_token', 'case_token', 'enrlmntPrtnrsNm')
 
 
