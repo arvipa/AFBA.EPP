@@ -317,7 +317,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                         crtd_dt=data['crtdDt'], crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'],
                         lst_updt_by=data['lstUpdtBy'], effctv_dt=effctv_dt)
                 except Exception:
-                    print("Unexpected error:", sys.exc_info()[0])
+                    return Response("Error while inserting into EppGrpprdct", status=status.HTTP_400_BAD_REQUEST)
                 prd_detail = data[prod_name]
                 # Insert first EPP_ProductCode data.
                 for prd_key in prd_cd_keys:
