@@ -3,6 +3,17 @@ Configuration file to store product attributes.
 """
 
 
+IS_ACTIVE = {
+    "isFPPGActive": "fppg",
+    "isHIActive": "hi",
+    "isACCActive": "acc",
+    "isER_CIActive": "eR_CI",
+    "isVOL_CIActive": "voL_CI",
+    "isVGLActive": "vgl",
+    "isBGLActive": "bgl",
+    "isFPPIActive": "fppi",
+}
+
 PRODUCTS = {
     "fppg": ("effctv_dt", "grp_situs_state", "emp_gi_max_amt", "sp_gi_max_amt",
              "emp_ProductCode", "sp_ProductCode", "ch_ProductCode", "emp_waiver_of_prem",
