@@ -292,12 +292,11 @@ class EppCreateGrpList(generics.CreateAPIView):
 
     def AddBulkData(self, data):
         """
-        Add bulk data and product codes.
+        Add group product, product codes, and bulk data in respective tables.
         :param data: dictionary containing data
         :return: No data.
         """
-        prd_cd_keys = (
-        "emp_plan_cd", "sp_plan_cd", "ch_plan_cd", "emp_ProductCode", "sp_ProductCode", "ch_ProductCode")
+        prd_cd_keys = ("emp_ProductCode", "sp_ProductCode", "ch_ProductCode")
         is_active_keys = IS_ACTIVE.keys()
         for act_key in is_active_keys:
             check_flag = data.get(act_key, False)
@@ -318,17 +317,23 @@ class EppCreateGrpList(generics.CreateAPIView):
                         lst_updt_by=data['lstUpdtBy'], effctv_dt=effctv_dt)
                 except Exception:
                     print("Unexpected error:", sys.exc_info()[0])
+                prd_detail = data[prod_name]
                 # Insert first EPP_ProductCode data.
-                # prd_cd = EppProductcodes.object.create(
-                #     prodct_cd_id=, product_code=, product=, optn=, crtd_dt=data['crtdDt'],
-                #         crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'], lst_updt_by=data['lstUpdtBy'])
-                # New product in parameters so get its attr and insert its values.
                 for prd_key in prd_cd_keys:
+                    if prd_detail.get(prd_key, None):
+                        prd_cd = EppProductcodes.objects.create(
+                            prodct_cd_id=DateRand().randgen(), product_code=prd_detail[prd_key],
+                            product=EppProduct.objects.get(product_id=prd_dict['product_id']),
+                            optn=prd_key[:2].upper(), crtd_dt=data['crtdDt'],
+                            crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'], lst_updt_by=data['lstUpdtBy'])
+                # New product attributes in parameters so get its attr and insert its values.
+                all_attr = prd_detail.keys()
+                for aatr in all_attr:
                     prd_dict = data[IS_ACTIVE[act_key]]
-                    prd_attr = EppAttribute.objects.filter(db_attr_nm=prd_key, is_qstn_attrbt="N")
+                    prd_attr = EppAttribute.objects.filter(db_attr_nm=aatr, is_qstn_attrbt="N")
                     if prd_attr.exists():
                         bulk_ref = EppBulkreftbl.objects.create(
-                            bulk_id=DateRand().randgen(), grpprdct=epp_grp_prd, value=prd_dict[prd_key],
+                            bulk_id=DateRand().randgen(), grpprdct=epp_grp_prd, value=prd_dict[aatr],
                             attr=prd_attr[0], action=EppAction.objects.get(action_id=10001), crtd_dt=data['crtdDt'],
                             crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'], lst_updt_by=data['lstUpdtBy'])
                         print("bulk_ref", bulk_ref)
