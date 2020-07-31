@@ -2,14 +2,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http.response import JsonResponse
 from .models import EppAction, EppProduct, EppGrppymntmd, EppErrormessage, EppGrpmstr, \
-    EppGrpprdct, EppBulkreftbl, EppAttribute, EppEnrlmntPrtnrs,EppAgents
+    EppGrpprdct, EppBulkreftbl, EppAttribute, EppEnrlmntPrtnrs,EppAgents, EppProductcodes
 from .serializers import EppActionSerializer, EppProductSerializer, EppGrppymntmdSerializer, EppErrormessageSerializer, \
     EppGrpmstrSerializer, EppGrpmstrPostSerializers, EppCrtGrpmstrSerializer, EppGrpAgentSerializer
 from rest_framework import status, generics
 import random as rand
 from datetime import datetime, timezone
-from AFBA_EPP.config import PRODUCTS
+from AFBA_EPP.config import PRODUCTS, IS_ACTIVE
 from AFBA_EPP.utils import add_product_attr
+import sys
 
 class EppActionList(APIView):
     def get(self, request):
@@ -169,77 +170,123 @@ class EppCreateGrpList(generics.CreateAPIView):
     serializer_class = EppCrtGrpmstrSerializer
 
     def put(self,request):
+        print("in Put")
         f1 = DateRand()
         todayDt = f1.getCurntUtcTime()
         request.data['lstUpdtDt'] = todayDt.strftime('%Y-%m-%d')
         request.data['lstUpdtBy'] = 'Batch'
         if EppGrpmstr.objects.filter(grp_nbr=request.data['grpNbr']).exists():
+            print("in grpnbr filter")
             pymntput_fk = EppGrppymntmd.objects.get(pk=request.data['grpPymn'])
             #Validates enrlmntPrtnrsId if exists, updats the EppEnrlmntPrtnrs else inserts the data
             request.data['enrlmntPrtnrsId'] = self.validateEnrlmnt(request.data)
+            print("After enrolment")
             if inserted==0:
                 EppEnrlmntPrtnrs.objects.filter(eml_addrss=request.data['emlAddrss']).update\
                     (enrlmnt_prtnrs_id=request.data['enrlmntPrtnrsId'], enrlmnt_prtnrs_nm=request.data['enrlmntPrtnrsNm'],\
                      lst_updt_dt=request.data['lstUpdtDt'], lst_updt_by=request.data['lstUpdtBy'])
-
+            print("Before enrlmnt pk")
             enrollmentput_fk = EppEnrlmntPrtnrs.objects.get(pk=request.data['enrlmntPrtnrsId'])
-
+            print("Before Grp Add")
             EppGrpmstr.objects.filter(grp_nbr=request.data['grpNbr']).update\
                 (grp_id=request.data['grpId'], grp_efftv_dt = request.data['grpEfftvDt'],\
                  grp_situs_st = request.data['grpSitusSt'],actv_flg = request.data['actvFlg'],grppymn = pymntput_fk,\
                  enrlmnt_prtnrs = enrollmentput_fk,occ_class = request.data['occClass'],acct_mgr_nm = request.data['acctMgrNm'],\
                  acct_mgr_email_addrs = request.data['acctMgrEmailAddrs'],usr_tkn = request.data['user_token'],\
                  case_tkn = request.data['case_token'],lst_updt_dt = request.data['lstUpdtDt'],lst_updt_by=request.data['lstUpdtBy'])
-
+            print("after grp Add")
             i=0
+            print("Before Agent check")
             while (i<len(request.data['grpAgents'])):
                 print(request.data['grpAgents'][i])
-                if EppAgents.objects.filter(grp=request.data['grpAgents'][i]['grpId']).exists():
+                if EppAgents.objects.filter(grp=request.data['grpId']).exists():
+                    print("grpId exists")
                     if EppAgents.objects.filter(agent_id=request.data['grpAgents'][i]['agentId']).exists():
-
+                        print("AgentID exists")
                         EppAgents.objects.filter(agent_id=request.data['grpAgents'][i]['agentId']).update \
                             (agnt_nbr=request.data['grpAgents'][i]['agntNbr'],\
                             agnt_nm=request.data['grpAgents'][i]['agntNm'], \
                             agnt_sub_cnt=request.data['grpAgents'][i]['agntSubCnt'], \
                             agnt_comsn_splt=request.data['grpAgents'][i]['agntComsnSplt'],\
                             lst_updt_dt=request.data['lstUpdtDt'], lst_updt_by=request.data['lstUpdtBy'])
+                        print("After update")
                     else:
+                        print("In insertion")
                         self.AddAgentDet(request.data,i)
+                    print("in while loop")
+                else:
+                    print("no grpID with Agent")
                 i=i+1
 
             print("Before grpprdct logic")
-
             if EppGrpprdct.objects.filter(grp=request.data['grpId']).exists():
                 grp_lst = list(EppGrpprdct.objects.filter(grp=request.data['grpId']).values())
                 for grpprd_data in grp_lst:
-                    print(grpprd_data)
-                    print("grp product_Id : ", grpprd_data['product_id'])
-                    print("grp grp_id: ", grpprd_data['grp_id'])
-                    print("grp effctv_dt: ", grpprd_data['effctv_dt'])
-               #     prd = EppGrpprdct.objects.select_related('product').get(grp=grpprd_data['grp_id'])
-               #     print(prd)
-               #     print(prd.product.product_nm)
-               #     print(prd.product.product_id)
-                    prd_data = EppProduct.objects.filter(product_id=grpprd_data['product_id'])
-                    prd_lst = list(prd_data.values())[0]
-                 #   prd_lst = list(EppProduct.objects.filter(product_id=grpprd_data['product_id']))
-                    print(prd_lst['product_id'])
-                    print(prd_lst['product_nm'])
-                    pr_key = prd_lst['product_nm'].lower()
-                    prd_attr_conf = PRODUCTS.get(pr_key, ())
-                    print(prd_attr_conf)
-                    blkData = list(EppBulkreftbl.objects.filter(grpprdct=grpprd_data['grpprdct_id']).values())
-                    for blk_data in blkData:
-                        print("bulk_id: ",blk_data['bulk_id'])
-                        print("grpprdct_id: ", blk_data['grpprdct_id'])
-                        print("value: ", blk_data['value'])
-                        print("attr_id: ", blk_data['attr_id'])
-                        print("action_id: ", blk_data['action_id'])
-                        prd_attr_data = list(EppAttribute.objects.filter(attr_id=blk_data['attr_id']).values())
-                        for attr_data in prd_attr_data:
-                            print('db_attr_nm: ',attr_data['db_attr_nm'])
-                            print('db_attr_value: ',blk_data['value'])
-
+                    prd_cd_keys = ("emp_ProductCode", "sp_ProductCode", "ch_ProductCode")
+                    is_active_keys = IS_ACTIVE.keys()
+                    for act_key in is_active_keys:
+                        check_flag = request.data.get(act_key, False)
+                        if check_flag:
+                            prod_name = IS_ACTIVE[act_key]
+                            print("Product that should be added is >>> ", prod_name)
+                            prd_data = EppProduct.objects.filter(product_nm=prod_name.upper())
+                            prd_dict = list(prd_data.values())[0]
+                            print("prd_dict: ",prd_dict)
+                            grpprdct_id = grpprd_data['grpprdct_id']
+                            effctv_dt = grpprd_data['effctv_dt']
+                            try:
+                                epp_grp_prd = EppGrpprdct.objects.filter\
+                                    (grpprdct_id=grpprdct_id).update\
+                                        (product=prd_dict['product_id'],
+                                         grp=EppGrpmstr.objects.get(grp_id=request.data['grpId']),
+                                         lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
+                                         lst_updt_by='Batch', effctv_dt=effctv_dt)
+                            except Exception:
+                                print("Error while updating:", sys.exc_info()[0])
+                            prd_detail = request.data[prod_name]
+                            print("prd_detail: ",prd_detail)
+                            for prd_key in prd_cd_keys:
+                                prdCd_lst = list(EppProductcodes.objects.filter(product_id=prd_dict['product_id'],\
+                                    product_code=prd_detail[prd_key]).values())
+                                for prdCd_data in prdCd_lst:
+                                    if prd_detail.get(prd_key, None):
+                                            prd_cd = EppProductcodes.objects.filter\
+                                                (prodct_cd_id=prdCd_data['prodct_cd_id'],\
+                                                 product_code=prd_detail[prd_key]).update \
+                                                (product=EppProduct.objects.get(product_id=prd_dict['product_id']),
+                                                 optn=prd_key[:2].upper(),
+                                                 lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
+                                                 lst_updt_by='Batch')
+                            all_attr = prd_detail.keys()
+                            for aatr in all_attr:
+                                print(aatr)
+                                prd_dict = request.data[IS_ACTIVE[act_key]]
+                                prd_attr = EppAttribute.objects.filter(db_attr_nm=aatr, is_qstn_attrbt="N")
+                                if prd_attr.exists():
+                                    blkData_lst = list(EppBulkreftbl.objects.filter(grpprdct=grpprd_data['grpprdct_id'],\
+                                                                                    attr=prd_attr[0].attr_id).values())
+                                    if EppBulkreftbl.objects.filter(grpprdct=grpprd_data['grpprdct_id'],\
+                                                                    attr=prd_attr[0].attr_id).exists():
+                                        count=0
+                                        for blkData_data in blkData_lst:
+                                            count=count+1
+                                            print("In bl ref loop",count)
+                                            bulk_ref = EppBulkreftbl.objects.filter \
+                                                (bulk_id=blkData_data['bulk_id'], \
+                                                grpprdct=grpprd_data['grpprdct_id'],
+                                                 attr=prd_attr[0].attr_id).update \
+                                               (value=prd_dict[aatr] if prd_dict[aatr].strip() else None,
+                                                 attr=prd_attr[0].attr_id, action=EppAction.objects.get(action_id=10001),
+                                                lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
+                                                 lst_updt_by='Batch')
+                                    else:
+                                        bulk_ref = EppBul'kreftbl.objects.create(
+                                            bulk_id=DateRand().randgen(), grpprdct=epp_grp_prd, value=prd_dict[aatr],
+                                            attr=prd_attr[0], action=EppAction.objects.get(action_id=10001),
+                                            crtd_dt=todayDt.strftime('%Y-%m-%d'),
+                                            crtd_by='Batch', lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
+                                            lst_updt_by='Batch')
+                                    print("bulk_ref", bulk_ref)
             return Response("Group No. " + str(request.data['grpNbr']) + " updated sucessfully!",
                         status=status.HTTP_200_OK)
 
