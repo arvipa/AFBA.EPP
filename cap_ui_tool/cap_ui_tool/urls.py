@@ -16,6 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, re_path, path
 from rest_framework_swagger.views import get_swagger_view
+from django.views.generic.base import TemplateView
+from django.conf.urls import url
 
 schema_view = get_swagger_view(title='AFBA EPP API')
 
@@ -23,4 +25,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     re_path(r'^', include('AFBA_EPP.urls')),
     path(r'swagger/', schema_view),
+	url(r'^.*', TemplateView.as_view(template_name="Index.html"), name="Index")
 ]

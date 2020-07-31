@@ -1,0 +1,23 @@
+{"grpId": 0,
+      "grpNbr": "23456",
+      "grpNm": "sample",
+      "grpEfftvDt": "2020-06-20T12:37:33.025Z",
+      "grpSitusSt": "AL",
+      "actvFlg": "Y",
+      "occClass": 1,
+      "grpPymn": 10002,
+      "enrlmntPrtnrsId": 0,
+      "enrlmntPrtnrsNm": "sample",
+      "emlAddrss": "sampl@gmail.com",
+      "emailAddress": "sampl@gmail.com",
+      "acctMgrNm": "sss",
+      "acctMgrCntctId": 0,
+      "FPPG": {
+        "effctv_dt": "123",
+        "grp_situs_state": "SL"
+      },
+      "acc": {
+        "effctv_dt": "123",
+        "grp_situs_state": "SL"
+      }
+    }
