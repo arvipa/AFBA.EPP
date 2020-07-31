@@ -201,8 +201,8 @@ class EppGrpmstr(models.Model):
 
 class EppGrpprdct(models.Model):
     grpprdct_id = models.BigIntegerField(primary_key=True)
-    grp = models.ForeignKey(EppGrpmstr, models.DO_NOTHING, blank=True, null=True)
-    product = models.ForeignKey('EppProduct', models.DO_NOTHING, blank=True, null=True)
+    grp = models.ForeignKey('EppGrpmstr', on_delete=models.CASCADE, blank=True, null=True)
+    product = models.ForeignKey('EppProduct', on_delete=models.CASCADE, blank=True, null=True)
     crtd_dt = models.DateField()
     crtd_by = models.CharField(max_length=10)
     lst_updt_dt = models.DateField(blank=True, null=True)
