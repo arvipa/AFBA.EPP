@@ -235,6 +235,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                                     grp=EppGrpmstr.objects.get(grp_id=request.data['grpId']),
                                     lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
                                     lst_updt_by='Batch', effctv_dt=effctv_dt)
+
                             except Exception:
                                 print("Error while updating:", sys.exc_info()[0])
                             prd_detail = request.data[prod_name]
@@ -255,7 +256,9 @@ class EppCreateGrpList(generics.CreateAPIView):
                             for aatr in all_attr:
                                 print(aatr)
                                 prd_dict = request.data[IS_ACTIVE[act_key]]
+                                print('prd_dict: ',prd_dict)
                                 prd_attr = EppAttribute.objects.filter(db_attr_nm=aatr, is_qstn_attrbt="N")
+                                print('prd_attr: ',prd_attr)
                                 if prd_attr.exists():
                                     blkData_lst = list(EppBulkreftbl.objects.filter(grpprdct=grpprd_data['grpprdct_id'], \
                                                                             attr=prd_attr[0].attr_id).values())
@@ -274,10 +277,13 @@ class EppCreateGrpList(generics.CreateAPIView):
                                                 lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
                                                 lst_updt_by='Batch')
                                     else:
+
                                         bulk_ref = EppBulkreftbl.objects.create(
-                                            bulk_id = DateRand().randgen(), grpprdct = epp_grp_prd, value = prd_dict[aatr],
-                                            attr = prd_attr[0], action = EppAction.objects.get(action_id=10001),
-                                            crtd_dt = todayDt.strftime('%Y-%m-%d'),
+                                            bulk_id = DateRand().randgen(), grpprdct=EppGrpprdct.objects.get \
+                                                (grpprdct_id=grpprd_data['grpprdct_id']),
+                                                value = prd_dict[aatr],
+                                                attr = prd_attr[0], action = EppAction.objects.get(action_id=10001),
+                                                crtd_dt = todayDt.strftime('%Y-%m-%d'),
                                             crtd_by = 'Batch', lst_updt_dt = todayDt.strftime('%Y-%m-%d'),
                                             lst_updt_by = 'Batch')
                                     print("bulk_ref", bulk_ref)
