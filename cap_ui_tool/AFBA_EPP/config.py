@@ -14,6 +14,8 @@ IS_ACTIVE = {
     "isFPPIActive": "fppi",
 }
 
+IS_ACTIVE_REVERSE = {value: key for key, value in IS_ACTIVE.items()}
+
 PRODUCTS = {
     "fppg": ("effctv_dt", "grp_situs_state", "emp_gi_max_amt", "sp_gi_max_amt",
              "emp_ProductCode", "sp_ProductCode", "ch_ProductCode", "emp_waiver_of_prem",

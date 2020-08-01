@@ -9,7 +9,7 @@ from .serializers import EppActionSerializer, EppProductSerializer, EppGrppymntm
 from rest_framework import status, generics
 import random as rand
 from datetime import datetime, timezone
-from AFBA_EPP.config import PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE, PRODUCT_QUESTIONS
+from AFBA_EPP.config import PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE, PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE
 from AFBA_EPP.utils import add_product_attr, add_question_attr
 
 
@@ -141,6 +141,8 @@ class EppGrpmstrPostList(generics.ListAPIView):
             # print("prd_dict >>> ", prd_dict)
             pr_key = prd_dict['product_nm'].lower()
             return_data.setdefault(pr_key, {})
+            # Creat active key in return data.
+            return_data.setdefault(IS_ACTIVE_REVERSE[pr_key], True)
             # From configuration get all attributes required within the product.
             prd_attr_conf = PRODUCTS.get(pr_key, ())
             add_product_attr(return_data, pr_key, prd_attr_conf)
