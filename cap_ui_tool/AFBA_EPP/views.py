@@ -130,7 +130,7 @@ class EppGrpmstrPostList(generics.ListAPIView):
             return Response("", status=status.HTTP_200_OK)
         group_data = EppGrpmstr.objects.filter(grp_nbr=group_nbr).select_related()
         group_dict = list(group_data.values())[0]
-        return_data = EppGrpmstrPostSerializers(group_data, many=True).data
+        return_data = EppGrpmstrPostSerializers(group_data[0]).data
         # Using group_id from group data dict get all group products.
         grp_prd_data = EppGrpprdct.objects.filter(grp=group_dict['grp_id']).prefetch_related('eppproduct')
         grp_prod_lst = list(grp_prd_data.values())
@@ -140,7 +140,7 @@ class EppGrpmstrPostList(generics.ListAPIView):
             prd_dict = list(prd_data.values())[0]
             # print("prd_dict >>> ", prd_dict)
             pr_key = prd_dict['product_nm'].lower()
-            return_data[0].setdefault(pr_key, {})
+            return_data.setdefault(pr_key, {})
             # From configuration get all attributes required within the product.
             prd_attr_conf = PRODUCTS.get(pr_key, ())
             add_product_attr(return_data, pr_key, prd_attr_conf)
@@ -152,10 +152,10 @@ class EppGrpmstrPostList(generics.ListAPIView):
                 prd_attr_list = list(prd_attr_data.values())
                 db_attr_name = prd_attr_list[0]['db_attr_nm']
                 db_attr_value = blk_dat['value']
-                return_data[0].setdefault(pr_key, {}).update({db_attr_name: db_attr_value})
+                return_data.setdefault(pr_key, {}).update({db_attr_name: db_attr_value})
                 db_attr_value_action = blk_dat['action_id']
                 if db_attr_name.find("_action") > 1:
-                    return_data[0].setdefault(pr_key, {}).update({db_attr_name: db_attr_value_action})
+                    return_data.setdefault(pr_key, {}).update({db_attr_name: db_attr_value_action})
         return Response(return_data)
 
 
@@ -308,8 +308,8 @@ class EppCreateGrpList(generics.CreateAPIView):
         request.data['lstUpdtDt'] =todayDt.strftime('%Y-%m-%d')
         request.data['lstUpdtBy'] = 'Batch'
         grp_mastr = EppGrpmstr(grppymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk)
-        serializer = EppCrtGrpmstrSerializer(grp_mastr, data=request.data)
-        if serializer.is_valid():
+        # serializer = EppCrtGrpmstrSerializer(grp_mastr, data=request.data)
+        if True:
             try:
                grpMstrMthd = EppGrpmstr(grp_id=request.data['grpId'], grp_nbr=request.data['grpNbr'],\
                                         grp_nm=request.data['grpNm'],grp_efftv_dt=request.data['grpEfftvDt'], \

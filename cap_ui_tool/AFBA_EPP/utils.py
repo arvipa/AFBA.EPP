@@ -12,7 +12,7 @@ def add_product_attr(data, key_pr, attr_tup):
     :return: It creates Product attributes and its empty values in main data dictionary.
     """
     for attr in attr_tup:
-        data[0].setdefault(key_pr, {}).update({attr: None})
+        data.setdefault(key_pr, {}).update({attr: None})
 
 
 def add_question_attr(data, key_pr, attr_tup):
