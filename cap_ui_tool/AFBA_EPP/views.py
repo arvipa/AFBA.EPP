@@ -126,6 +126,8 @@ class EppGrpmstrPostList(generics.ListAPIView):
     def get(self, request, grpNbr):
         # Get Group data
         group_nbr = self.kwargs['grpNbr']
+        if group_nbr == 'undefined':
+            return Response("", status=status.HTTP_200_OK)
         group_data = EppGrpmstr.objects.filter(grp_nbr=group_nbr).select_related()
         group_dict = list(group_data.values())[0]
         return_data = EppGrpmstrPostSerializers(group_data, many=True).data
