@@ -1,15 +1,24 @@
+# Standard library imports.
 import sys
+import random as rand
+from collections import OrderedDict
+from datetime import datetime, timezone
+
+# Related third-party imports.
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from collections import OrderedDict
-from .models import EppAction, EppProduct, EppGrppymntmd, EppErrormessage, EppGrpmstr, \
-    EppGrpprdct, EppBulkreftbl, EppAttribute, EppEnrlmntPrtnrs,EppAgents, EppProductcodes
-from .serializers import EppActionSerializer, EppProductSerializer, EppGrppymntmdSerializer, EppErrormessageSerializer, \
-    EppGrpmstrSerializer, EppGrpmstrPostSerializers, EppCrtGrpmstrSerializer, EppGrpAgentSerializer
 from rest_framework import status, generics
-import random as rand
-from datetime import datetime, timezone
-from AFBA_EPP.config import PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE, PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE
+
+# Local application/library specific imports.
+from AFBA_EPP.models import (EppAction, EppProduct, EppGrppymntmd, EppErrormessage,
+                              EppGrpmstr, EppGrpprdct, EppBulkreftbl, EppAttribute,
+                              EppEnrlmntPrtnrs,EppAgents, EppProductcodes)
+from AFBA_EPP.serializers import (EppActionSerializer, EppProductSerializer,
+                                   EppGrppymntmdSerializer, EppErrormessageSerializer,
+                                   EppGrpmstrSerializer, EppGrpmstrPostSerializers,
+                                   EppCrtGrpmstrSerializer, EppGrpAgentSerializer)
+from AFBA_EPP.config import (PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE,
+                              PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE)
 from AFBA_EPP.utils import add_product_attr, add_question_attr
 
 
