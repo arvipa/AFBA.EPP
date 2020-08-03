@@ -399,3 +399,55 @@ class BulkQuestionsList(generics.ListAPIView):
                     return_data.update({PRODUCT_ACTIVE.get(pr): False})
                     return_data.update({PRODUCT_QUESTIONS.get(pr): None})
         return Response(return_data)
+
+
+class BulkQuestionAddList(generics.CreateAPIView):
+    serializer_class = EppCrtGrpmstrSerializer
+
+    def post(self, request):
+        try:
+            f1 = DateRand()
+            todayDt = f1.getCurntUtcTime()
+            group_data = EppGrpmstr.objects.filter(grp_nbr=request.data.get('grpNbr'))
+            if group_data:
+                for question_key, question_val in PRODUCT_QUESTIONS.items():
+                    if question_val in request.data and request.data.get(question_val):
+                        question_data = request.data[question_val]
+                        bulk_data = list(EppBulkreftbl.objects.filter(grpprdct=question_data['grpprdctId']).values())
+                        if bulk_data:
+                            for blk_dat in bulk_data:
+                                prd_attr_list = list(
+                                    EppAttribute.objects.filter(attr_id=blk_dat['attr_id'],
+                                                                is_qstn_attrbt='Y').values())
+                                if prd_attr_list:
+                                    bulk_data_del = EppBulkreftbl.objects.filter(grpprdct=question_data['grpprdctId'],
+                                                                                 attr_id=prd_attr_list[0]['attr_id'])
+                                    bulk_data_del.delete()
+                        ch_val, emp_val, sp_val = question_data['ch_action'], question_data['emp_action'], \
+                                                  question_data['sp_action']
+                        for rec_key, rec_val in question_data.items():
+                            if rec_key not in ('ch_action', 'sp_action', 'emp_action', 'grpprdctId'):
+                                action_rec = ''
+                                prd_attr_insert = EppAttribute.objects.filter(db_attr_nm=rec_key, is_qstn_attrbt='Y')
+                                if 'emp_' in rec_key:
+                                    action_rec = emp_val
+                                elif 'ch_' in rec_key:
+                                    action_rec = ch_val
+                                else:
+                                    action_rec = sp_val
+                                if prd_attr_insert.exists():
+                                    bulk_ref = EppBulkreftbl.objects.create(
+                                        bulk_id=DateRand().randgen(),
+                                        grpprdct=EppGrpprdct.objects.get(grpprdct_id=question_data['grpprdctId']),
+                                        value=rec_val, attr=prd_attr_insert[0],
+                                        action=EppAction.objects.get(action_id=action_rec),
+                                        crtd_dt=todayDt.strftime('%Y-%m-%d'), crtd_by='Batch',
+                                        lst_updt_dt=todayDt.strftime('%Y-%m-%d'), lst_updt_by='Batch')
+                        return Response(
+                            "Questions for Group No. " + str(request.data['grpNbr']) + " updated/created sucessfully!",
+                            status=status.HTTP_200_OK)
+            else:
+                return Response("Data not found in EppGrpmstr table for grpNbr :" + str(request.data['grpNbr']),
+                                status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            return Response("Error while inserting in BulRef Table", status=status.HTTP_400_BAD_REQUEST)
