@@ -1,15 +1,24 @@
+# Standard library imports.
 import sys
+import random as rand
+from collections import OrderedDict
+from datetime import datetime, timezone
+
+# Related third-party imports.
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from collections import OrderedDict
-from .models import EppAction, EppProduct, EppGrppymntmd, EppErrormessage, EppGrpmstr, \
-    EppGrpprdct, EppBulkreftbl, EppAttribute, EppEnrlmntPrtnrs,EppAgents, EppProductcodes
-from .serializers import EppActionSerializer, EppProductSerializer, EppGrppymntmdSerializer, EppErrormessageSerializer, \
-    EppGrpmstrSerializer, EppGrpmstrPostSerializers, EppCrtGrpmstrSerializer, EppGrpAgentSerializer
 from rest_framework import status, generics
-import random as rand
-from datetime import datetime, timezone
-from AFBA_EPP.config import PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE, PRODUCT_QUESTIONS
+
+# Local application/library specific imports.
+from AFBA_EPP.models import (EppAction, EppProduct, EppGrppymntmd, EppErrormessage,
+                              EppGrpmstr, EppGrpprdct, EppBulkreftbl, EppAttribute,
+                              EppEnrlmntPrtnrs,EppAgents, EppProductcodes)
+from AFBA_EPP.serializers import (EppActionSerializer, EppProductSerializer,
+                                   EppGrppymntmdSerializer, EppErrormessageSerializer,
+                                   EppGrpmstrSerializer, EppGrpmstrPostSerializers,
+                                   EppCrtGrpmstrSerializer, EppGrpAgentSerializer)
+from AFBA_EPP.config import (PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE,
+                              PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE)
 from AFBA_EPP.utils import add_product_attr, add_question_attr
 
 
@@ -37,59 +46,59 @@ class EppGrppymntmdList(APIView):
 class SitusStateSerializerList(APIView):
     state_data = {"situsState": [
         {"id": 0, "state": '''---Select---'''},
-        {"Id": "AL", "State": "AL"},
-        {"Id": "AK", "State": "AK"},
-        {"Id": "AZ", "State": "AZ"},
-        {"Id": "AR", "State": "AR"},
-        {"Id": "CA", "State": "CA"},
-        {"Id": "CO", "State": "CO"},
-        {"Id": "CT", "State": "CT"},
-        {"Id": "DC", "State": "DC"},
-        {"Id": "DE", "State": "DE"},
-        {"Id": "FL", "State": "FL"},
-        {"Id": "GA", "State": "GA"},
-        {"Id": "HI", "State": "HI"},
-        {"Id": "ID", "State": "ID"},
-        {"Id": "IL", "State": "IL"},
-        {"Id": "IN", "State": "IN"},
-        {"Id": "IA", "State": "IA"},
-        {"Id": "KS", "State": "KS"},
-        {"Id": "KY", "State": "KY"},
-        {"Id": "LA", "State": "LA"},
-        {"Id": "ME", "State": "ME"},
-        {"Id": "MD", "State": "MD"},
-        {"Id": "MA", "State": "MA"},
-        {"Id": "MI", "State": "MI"},
-        {"Id": "MN", "State": "MN"},
-        {"Id": "MS", "State": "MS"},
-        {"Id": "MO", "State": "MO"},
-        {"Id": "MT", "State": "MT"},
-        {"Id": "NE", "State": "NE"},
-        {"Id": "NV", "State": "NV"},
-        {"Id": "NH", "State": "NH"},
-        {"Id": "NJ", "State": "NJ"},
-        {"Id": "NM", "State": "NM"},
-        {"Id": "NY", "State": "NY"},
-        {"Id": "NC", "State": "NC"},
-        {"Id": "ND", "State": "ND"},
-        {"Id": "OH", "State": "OH"},
-        {"Id": "OK", "State": "OK"},
-        {"Id": "OR", "State": "OR"},
-        {"Id": "PA", "State": "PA"},
-        {"Id": "RI", "State": "RI"},
-        {"Id": "SC", "State": "SC"},
-        {"Id": "SD", "State": "SD"},
-        {"Id": "TN", "State": "TN"},
-        {"Id": "TX", "State": "TX"},
-        {"Id": "UT", "State": "UT"},
-        {"Id": "VT", "State": "VT"},
-        {"Id": "VA", "State": "VA"},
-        {"Id": "WA", "State": "WA"},
-        {"Id": "WV", "State": "WV"},
-        {"Id": "WI", "State": "WI"},
-        {"Id": "WY", "State": "WY"},
-        {"Id": "PR", "State": "PR"},
-        {"Id": "VI", "State": "VI"}]
+        {"id": "AL", "state": "AL"},
+        {"id": "AK", "state": "AK"},
+        {"id": "AZ", "state": "AZ"},
+        {"id": "AR", "state": "AR"},
+        {"id": "CA", "state": "CA"},
+        {"id": "CO", "state": "CO"},
+        {"id": "CT", "state": "CT"},
+        {"id": "DC", "state": "DC"},
+        {"id": "DE", "state": "DE"},
+        {"id": "FL", "state": "FL"},
+        {"id": "GA", "state": "GA"},
+        {"id": "HI", "state": "HI"},
+        {"id": "ID", "state": "ID"},
+        {"id": "IL", "state": "IL"},
+        {"id": "IN", "state": "IN"},
+        {"id": "IA", "state": "IA"},
+        {"id": "KS", "state": "KS"},
+        {"id": "KY", "state": "KY"},
+        {"id": "LA", "state": "LA"},
+        {"id": "ME", "state": "ME"},
+        {"id": "MD", "state": "MD"},
+        {"id": "MA", "state": "MA"},
+        {"id": "MI", "state": "MI"},
+        {"id": "MN", "state": "MN"},
+        {"id": "MS", "state": "MS"},
+        {"id": "MO", "state": "MO"},
+        {"id": "MT", "state": "MT"},
+        {"id": "NE", "state": "NE"},
+        {"id": "NV", "state": "NV"},
+        {"id": "NH", "state": "NH"},
+        {"id": "NJ", "state": "NJ"},
+        {"id": "NM", "state": "NM"},
+        {"id": "NY", "state": "NY"},
+        {"id": "NC", "state": "NC"},
+        {"id": "ND", "state": "ND"},
+        {"id": "OH", "state": "OH"},
+        {"id": "OK", "state": "OK"},
+        {"id": "OR", "state": "OR"},
+        {"id": "PA", "state": "PA"},
+        {"id": "RI", "state": "RI"},
+        {"id": "SC", "state": "SC"},
+        {"id": "SD", "state": "SD"},
+        {"id": "TN", "state": "TN"},
+        {"id": "TX", "state": "TX"},
+        {"id": "UT", "state": "UT"},
+        {"id": "VT", "state": "VT"},
+        {"id": "VA", "state": "VA"},
+        {"id": "WA", "state": "WA"},
+        {"id": "WV", "state": "WV"},
+        {"id": "WI", "state": "WI"},
+        {"id": "WY", "state": "WY"},
+        {"id": "PR", "state": "PR"},
+        {"id": "VI", "state": "VI"}]
     }
 
     def get(self, request):
@@ -126,9 +135,11 @@ class EppGrpmstrPostList(generics.ListAPIView):
     def get(self, request, grpNbr):
         # Get Group data
         group_nbr = self.kwargs['grpNbr']
+        if group_nbr == 'undefined':
+            return Response("", status=status.HTTP_200_OK)
         group_data = EppGrpmstr.objects.filter(grp_nbr=group_nbr).select_related()
         group_dict = list(group_data.values())[0]
-        return_data = EppGrpmstrPostSerializers(group_data, many=True).data
+        return_data = EppGrpmstrPostSerializers(group_data[0]).data
         # Using group_id from group data dict get all group products.
         grp_prd_data = EppGrpprdct.objects.filter(grp=group_dict['grp_id']).prefetch_related('eppproduct')
         grp_prod_lst = list(grp_prd_data.values())
@@ -138,7 +149,9 @@ class EppGrpmstrPostList(generics.ListAPIView):
             prd_dict = list(prd_data.values())[0]
             # print("prd_dict >>> ", prd_dict)
             pr_key = prd_dict['product_nm'].lower()
-            return_data[0].setdefault(pr_key, {})
+            return_data.setdefault(pr_key, {})
+            # Creat active key in return data.
+            return_data.setdefault(IS_ACTIVE_REVERSE[pr_key], True)
             # From configuration get all attributes required within the product.
             prd_attr_conf = PRODUCTS.get(pr_key, ())
             add_product_attr(return_data, pr_key, prd_attr_conf)
@@ -150,10 +163,10 @@ class EppGrpmstrPostList(generics.ListAPIView):
                 prd_attr_list = list(prd_attr_data.values())
                 db_attr_name = prd_attr_list[0]['db_attr_nm']
                 db_attr_value = blk_dat['value']
-                return_data[0].setdefault(pr_key, {}).update({db_attr_name: db_attr_value})
+                return_data.setdefault(pr_key, {}).update({db_attr_name: db_attr_value})
                 db_attr_value_action = blk_dat['action_id']
                 if db_attr_name.find("_action") > 1:
-                    return_data[0].setdefault(pr_key, {}).update({db_attr_name: db_attr_value_action})
+                    return_data.setdefault(pr_key, {}).update({db_attr_name: db_attr_value_action})
         return Response(return_data)
 
 
@@ -196,7 +209,8 @@ class EppCreateGrpList(generics.CreateAPIView):
             i=0
             while (i<len(request.data['grpAgents'])):
                 print(request.data['grpAgents'][i])
-                if EppAgents.objects.filter(grp=request.data['grpAgents'][i]['grpId']).exists():
+
+                if EppAgents.objects.filter(grp=request.data['grpId']).exists():
                     if EppAgents.objects.filter(agent_id=request.data['grpAgents'][i]['agentId']).exists():
 
                         EppAgents.objects.filter(agent_id=request.data['grpAgents'][i]['agentId']).update \
@@ -208,6 +222,82 @@ class EppCreateGrpList(generics.CreateAPIView):
                     else:
                         self.AddAgentDet(request.data,i)
                 i=i+1
+            print("Before grpprdct logic")
+
+            if EppGrpprdct.objects.filter(grp=request.data['grpId']).exists():
+                grp_lst = list(EppGrpprdct.objects.filter(grp=request.data['grpId']).values())
+                for grpprd_data in grp_lst:
+                    prd_cd_keys = ("emp_ProductCode", "sp_ProductCode", "ch_ProductCode")
+                    is_active_keys = IS_ACTIVE.keys()
+                    for act_key in is_active_keys:
+                        check_flag = request.data.get(act_key, False)
+                        if check_flag:
+                            prod_name = IS_ACTIVE[act_key]
+                            print("Product that should be added is >>> ", prod_name)
+                            prd_data = EppProduct.objects.filter(product_nm=prod_name.upper())
+                            prd_dict = list(prd_data.values())[0]
+                            print("prd_dict: ", prd_dict)
+                            grpprdct_id = grpprd_data['grpprdct_id']
+                            effctv_dt = grpprd_data['effctv_dt']
+                            try:
+                                epp_grp_prd = EppGrpprdct.objects.filter \
+                                    (grpprdct_id=grpprdct_id).update \
+                                    (product=prd_dict['product_id'],
+                                    grp=EppGrpmstr.objects.get(grp_id=request.data['grpId']),
+                                    lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
+                                    lst_updt_by='Batch', effctv_dt=effctv_dt)
+
+                            except Exception:
+                                print("Error while updating:", sys.exc_info()[0])
+                            prd_detail = request.data[prod_name]
+                            print("prd_detail: ", prd_detail)
+                            for prd_key in prd_cd_keys:
+                                prdCd_lst = list(EppProductcodes.objects.filter(product_id=prd_dict['product_id'], \
+                                                                        product_code=prd_detail[prd_key]).values())
+                                for prdCd_data in prdCd_lst:
+                                    if prd_detail.get(prd_key, None):
+                                        prd_cd = EppProductcodes.objects.filter \
+                                            (prodct_cd_id=prdCd_data['prodct_cd_id'], \
+                                            product_code=prd_detail[prd_key]).update \
+                                            (product=EppProduct.objects.get(product_id=prd_dict['product_id']),
+                                            optn=prd_key[:2].upper(),
+                                            lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
+                                            lst_updt_by='Batch')
+                            all_attr = prd_detail.keys()
+                            for aatr in all_attr:
+                                print(aatr)
+                                prd_dict = request.data[IS_ACTIVE[act_key]]
+                                print('prd_dict: ',prd_dict)
+                                prd_attr = EppAttribute.objects.filter(db_attr_nm=aatr, is_qstn_attrbt="N")
+                                print('prd_attr: ',prd_attr)
+                                if prd_attr.exists():
+                                    blkData_lst = list(EppBulkreftbl.objects.filter(grpprdct=grpprd_data['grpprdct_id'], \
+                                                                            attr=prd_attr[0].attr_id).values())
+                                    if EppBulkreftbl.objects.filter(grpprdct=grpprd_data['grpprdct_id'], \
+                                                            attr=prd_attr[0].attr_id).exists():
+                                        count = 0
+                                        for blkData_data in blkData_lst:
+                                            count = count + 1
+                                            print("In bl ref loop", count)
+                                            bulk_ref = EppBulkreftbl.objects.filter \
+                                                (bulk_id=blkData_data['bulk_id'], \
+                                                grpprdct=grpprd_data['grpprdct_id'],
+                                                attr=prd_attr[0].attr_id).update \
+                                                (value=prd_dict[aatr] if prd_dict[aatr].strip() else None,
+                                                attr=prd_attr[0].attr_id, action=EppAction.objects.get(action_id=10001),
+                                                lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
+                                                lst_updt_by='Batch')
+                                    else:
+
+                                        bulk_ref = EppBulkreftbl.objects.create(
+                                            bulk_id = DateRand().randgen(), grpprdct=EppGrpprdct.objects.get \
+                                                (grpprdct_id=grpprd_data['grpprdct_id']),
+                                                value = prd_dict[aatr],
+                                                attr = prd_attr[0], action = EppAction.objects.get(action_id=10001),
+                                                crtd_dt = todayDt.strftime('%Y-%m-%d'),
+                                            crtd_by = 'Batch', lst_updt_dt = todayDt.strftime('%Y-%m-%d'),
+                                            lst_updt_by = 'Batch')
+                                    print("bulk_ref", bulk_ref)
 
             return Response("Group No. " + str(request.data['grpNbr']) + " updated sucessfully!",
                         status=status.HTTP_200_OK)
@@ -229,8 +319,8 @@ class EppCreateGrpList(generics.CreateAPIView):
         request.data['lstUpdtDt'] =todayDt.strftime('%Y-%m-%d')
         request.data['lstUpdtBy'] = 'Batch'
         grp_mastr = EppGrpmstr(grppymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk)
-        serializer = EppCrtGrpmstrSerializer(grp_mastr, data=request.data)
-        if serializer.is_valid():
+        # serializer = EppCrtGrpmstrSerializer(grp_mastr, data=request.data)
+        if True:
             try:
                grpMstrMthd = EppGrpmstr(grp_id=request.data['grpId'], grp_nbr=request.data['grpNbr'],\
                                         grp_nm=request.data['grpNm'],grp_efftv_dt=request.data['grpEfftvDt'], \
