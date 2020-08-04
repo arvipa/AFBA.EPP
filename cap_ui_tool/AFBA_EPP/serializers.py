@@ -88,11 +88,11 @@ class EppGrpmstrPostSerializers(serializers.ModelSerializer):
     class Meta:
         model = EppGrpmstr
         fields = (
-            'grpId', 'grpNbr', 'grpNm', 'grpEfftvDt', 'grpSitusSt', 'actvFlg', 'occClass', 'grppymn', 'enrlmntPrtnrsId',
+            'grpId', 'grpNbr', 'grpNm', 'grpEfftvDt', 'grpSitusSt', 'actvFlg', 'occClass', 'grpPymn', 'enrlmntPrtnrsId',
             'enrlmntPrtnrsNm', 'emlAddrss', 'acctMgrNm', 'acctMgrEmailAddrs', 'user_token', 'case_token', 'grpAgents')
 
         def to_representation(self, instance):
-            self.fields['grppymn'] = EppGrppymntmdSerializer(read_only=True)
+            self.fields['grpPymn'] = EppGrppymntmdSerializer(read_only=True)
             return super(EppGrpmstrPostSerializers, self).to_representation(instance)
 
 
