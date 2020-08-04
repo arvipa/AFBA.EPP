@@ -31,6 +31,10 @@ PRODUCTS = {
              )
 }
 
+PLAN_PROD_CODE_MAP = {
+    "emp_ProductCode": "emp_plan_cd", "sp_ProductCode": "sp_plan_cd", "ch_ProductCode": "ch_plan_cd"
+}
+
 QUESTIONS = {
     "fppGqstn": ('grpprdctId', 'emp_qstn_1', 'emp_qstn_2', 'emp_qstn_3a', 'emp_qstn_3b', 'emp_qstn_3c', 'emp_qstn_4',
                  'emp_qstn_5', 'sp_qstn_1', 'sp_qstn_2', 'sp_qstn_3a', 'sp_qstn_3b', 'sp_qstn_3c', 'sp_qstn_4',

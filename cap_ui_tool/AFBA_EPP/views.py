@@ -18,7 +18,7 @@ from AFBA_EPP.serializers import (EppActionSerializer, EppProductSerializer,
                                   EppGrpmstrSerializer, EppGrpmstrPostSerializers,
                                   EppCrtGrpmstrSerializer, EppGrpAgentSerializer)
 from AFBA_EPP.config import (PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE,
-                             PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE)
+                             PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE, PLAN_PROD_CODE_MAP)
 from AFBA_EPP.utils import add_product_attr, add_question_attr
 
 
@@ -203,7 +203,7 @@ class EppCreateGrpList(generics.CreateAPIView):
 
             EppGrpmstr.objects.filter(grp_nbr=request.data['grpNbr']).update \
                 (grp_id=request.data['grpId'], grp_efftv_dt=request.data['grpEfftvDt'], \
-                 grp_situs_st=request.data['grpSitusSt'], actv_flg=request.data['actvFlg'], grppymn=pymntput_fk, \
+                 grp_situs_st=request.data['grpSitusSt'], actv_flg=request.data['actvFlg'], grpPymn=pymntput_fk, \
                  enrlmnt_prtnrs=enrollmentput_fk, occ_class=request.data['occClass'],
                  acct_mgr_nm=request.data['acctMgrNm'], \
                  acct_mgr_email_addrs=request.data['acctMgrEmailAddrs'], usr_tkn=request.data['user_token'], \
@@ -323,14 +323,14 @@ class EppCreateGrpList(generics.CreateAPIView):
         request.data['crtdDt'] = todayDt.strftime('%Y-%m-%d')
         request.data['lstUpdtDt'] = todayDt.strftime('%Y-%m-%d')
         request.data['lstUpdtBy'] = 'Batch'
-        grp_mastr = EppGrpmstr(grppymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk)
+        grp_mastr = EppGrpmstr(grpPymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk)
         # serializer = EppCrtGrpmstrSerializer(grp_mastr, data=request.data)
         if True:
             try:
                 grpMstrMthd = EppGrpmstr(grp_id=request.data['grpId'], grp_nbr=request.data['grpNbr'], \
                                          grp_nm=request.data['grpNm'], grp_efftv_dt=request.data['grpEfftvDt'], \
                                          grp_situs_st=request.data['grpSitusSt'], actv_flg=request.data['actvFlg'], \
-                                         grppymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk, \
+                                         grpPymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk, \
                                          crtd_dt=request.data['crtdDt'], crtd_by=request.data['crtdBy'], \
                                          lst_updt_dt=request.data['lstUpdtDt'], lst_updt_by=request.data['lstUpdtBy'], \
                                          occ_class=request.data['occClass'], acct_mgr_nm=request.data['acctMgrNm'], \
@@ -424,6 +424,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                             product=EppProduct.objects.get(product_id=prd_dict['product_id']),
                             optn=prd_key[:2].upper(), crtd_dt=data['crtdDt'],
                             crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'], lst_updt_by=data['lstUpdtBy'])
+                        prd_detail[PLAN_PROD_CODE_MAP[prd_key]] = prd_detail[prd_key]
                 # New product attributes in parameters so get its attr and insert its values.
                 all_attr = prd_detail.keys()
                 for aatr in all_attr:
