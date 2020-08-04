@@ -18,7 +18,7 @@ from AFBA_EPP.serializers import (EppActionSerializer, EppProductSerializer,
                                   EppGrpmstrSerializer, EppGrpmstrPostSerializers,
                                   EppCrtGrpmstrSerializer, EppGrpAgentSerializer)
 from AFBA_EPP.config import (PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE,
-                             PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE, PLAN_PROD_CODE_MAP)
+                             PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE, PLAN_PROD_CD_MAP, REVERSE_PLAN_PROD_CD_MAP)
 from AFBA_EPP.utils import add_product_attr, add_question_attr
 
 
@@ -164,6 +164,9 @@ class EppGrpmstrPostList(generics.ListAPIView):
                     db_attr_name = prd_attr_list[0]['db_attr_nm']
                     db_attr_value = blk_dat['value']
                     return_data.setdefault(pr_key, {}).update({db_attr_name: db_attr_value})
+                    if REVERSE_PLAN_PROD_CD_MAP.get(db_attr_name, None):
+                        return_data.setdefault(
+                            pr_key, {}).update({REVERSE_PLAN_PROD_CD_MAP[db_attr_name]: db_attr_value})
                     db_attr_name_action = db_attr_name + "_action"
                     db_attr_value_action = str(blk_dat['action_id'])
                     return_data.setdefault(pr_key, {}).update({db_attr_name_action: db_attr_value_action})
@@ -424,7 +427,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                             product=EppProduct.objects.get(product_id=prd_dict['product_id']),
                             optn=prd_key[:2].upper(), crtd_dt=data['crtdDt'],
                             crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'], lst_updt_by=data['lstUpdtBy'])
-                        prd_detail[PLAN_PROD_CODE_MAP[prd_key]] = prd_detail[prd_key]
+                        prd_detail[PLAN_PROD_CD_MAP[prd_key]] = prd_detail[prd_key]
                 # New product attributes in parameters so get its attr and insert its values.
                 all_attr = prd_detail.keys()
                 for aatr in all_attr:
