@@ -14,6 +14,8 @@ IS_ACTIVE = {
     "isFPPIActive": "fppi",
 }
 
+IS_ACTIVE_REVERSE = {value: key for key, value in IS_ACTIVE.items()}
+
 PRODUCTS = {
     "fppg": ("effctv_dt", "grp_situs_state", "emp_gi_max_amt", "sp_gi_max_amt",
              "emp_ProductCode", "sp_ProductCode", "ch_ProductCode", "emp_waiver_of_prem",
@@ -27,6 +29,10 @@ PRODUCTS = {
              "sp_gi_max_amt_action", "emp_qi_max_amt_action", "sp_qi_max_amt_action",
              "emp_max_amt_action", "sp_max_amt_action", "h_max_amt_action",
              )
+}
+
+PLAN_PROD_CODE_MAP = {
+    "emp_ProductCode": "emp_plan_cd", "sp_ProductCode": "sp_plan_cd", "ch_ProductCode": "ch_plan_cd"
 }
 
 QUESTIONS = {
