@@ -3,12 +3,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from collections import OrderedDict
 from .models import EppAction, EppProduct, EppGrppymntmd, EppErrormessage, EppGrpmstr, \
-    EppGrpprdct, EppBulkreftbl, EppAttribute, EppEnrlmntPrtnrs,EppAgents, EppProductcodes
+    EppGrpprdct, EppBulkreftbl, EppAttribute, EppEnrlmntPrtnrs,EppAgents, EppProductcodes, EppPrdctattrbt
 from .serializers import EppActionSerializer, EppProductSerializer, EppGrppymntmdSerializer, EppErrormessageSerializer, \
     EppGrpmstrSerializer, EppGrpmstrPostSerializers, EppCrtGrpmstrSerializer, EppGrpAgentSerializer
 from rest_framework import status, generics
 import random as rand
 from datetime import datetime, timezone
+import collections
 from AFBA_EPP.config import PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE, PRODUCT_QUESTIONS
 from AFBA_EPP.utils import add_product_attr, add_question_attr
 
@@ -477,4 +478,35 @@ class BulkQuestionsList(generics.ListAPIView):
                 for pr in diff_pr:
                     return_data.update({PRODUCT_ACTIVE.get(pr): False})
                     return_data.update({PRODUCT_QUESTIONS.get(pr): None})
+        return Response(return_data)
+
+class CloneTemplt(generics.ListAPIView):
+    def get(self, request, grpNbr):
+        return_data = OrderedDict()
+        group_nbr = self.kwargs['grpNbr']
+        group_data = EppGrpmstr.objects.filter(grp_nbr=group_nbr).select_related()
+        group_dict = list(group_data.values())[0]
+        grp_prd_data = EppGrpprdct.objects.filter(grp=group_dict['grp_id'])
+        grp_prod_lst = list(grp_prd_data.values())
+        for grprd_data in grp_prod_lst:
+            prd_data = EppProduct.objects.filter(product_id=grprd_data['product_id'])
+            prd_dict =(list(prd_data.values()))
+            print(grprd_data['grpprdct_id'])
+            print(prd_dict[0]['product_nm'])
+            return_data.setdefault('configuredProduct',[]).append({'grpprdct_id':str(grprd_data['grpprdct_id']),\
+                                                                   'product_nm':prd_dict[0]['product_nm']})
+            prdAttr_lst = EppPrdctattrbt.objects.filter(grpprdct=grprd_data['grpprdct_id'])
+
+            for prdAttr_data in list(prdAttr_lst.values()):
+                print(prdAttr_data)
+                Attr_lst = EppAttribute.objects.filter(attr_id=prdAttr_data['attr_id'])
+                for Attr_data in list(Attr_lst.values()):
+                    return_data.setdefault('selectedList',[]).append({'prdctAttrbtId':str(prdAttr_data['prdct_attrbt_id']),
+                                                                  'dbAttrNm':Attr_data['db_attr_nm'],
+                                                                  'displyAttrNm':Attr_data['disply_attr_nm'],
+                                                                  'attrId':prdAttr_data['attr_id'],
+                                                                  'rqdFlg': True if prdAttr_data['rqd_flg'] == 'Y' else False,
+                                                                  'clmnOrdr':prdAttr_data['clmn_ordr'],
+                                                                  'grpprdct_id':str(grprd_data['grpprdct_id'])})
+
         return Response(return_data)
