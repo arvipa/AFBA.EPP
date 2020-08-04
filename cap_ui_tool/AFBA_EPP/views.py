@@ -18,7 +18,7 @@ from AFBA_EPP.serializers import (EppActionSerializer, EppProductSerializer,
                                   EppGrpmstrSerializer, EppGrpmstrPostSerializers,
                                   EppCrtGrpmstrSerializer, EppGrpAgentSerializer)
 from AFBA_EPP.config import (PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE,
-                             PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE, IS_ACTIVE_QUESTION)
+                             PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE)
 from AFBA_EPP.utils import add_product_attr, add_question_attr
 
 
