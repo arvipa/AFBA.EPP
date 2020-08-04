@@ -356,7 +356,7 @@ class EppCreateGrpList(generics.CreateAPIView):
             todayDt = f3.getCurntUtcTime()
             grpId_fk = EppGrpmstr.objects.get(pk=data['grpId'])
             print('Before Agentmthd')
-            Agentmthd = EppAgents(agent_id=data['grpAgents'][i]['agentId'], agnt_nbr=data['grpAgents'][i]['agntNbr'], \
+            Agentmthd = EppAgents(agent_id=f3.randgen(), agnt_nbr=data['grpAgents'][i]['agntNbr'], \
                                   agnt_nm=data['grpAgents'][i]['agntNm'],
                                   agnt_sub_cnt=data['grpAgents'][i]['agntSubCnt'], \
                                   agnt_comsn_splt=data['grpAgents'][i]['agntComsnSplt'], grp=grpId_fk, \
