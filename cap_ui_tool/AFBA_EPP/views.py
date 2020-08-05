@@ -338,8 +338,8 @@ class EppCreateGrpList(generics.CreateAPIView):
                                          usr_tkn=request.data['acctMgrEmailAddrs'],
                                          case_tkn=request.data['acctMgrEmailAddrs'])
                 grpMstrMthd.save()
-                i = 0
-                self.AddAgentDet(request.data, i)
+                for agnt in request.data['grpAgents']:
+                    self.AddAgentDet(request.data, agnt)
                 self.AddBulkData(request.data)
                 return Response("Group No. " + str(request.data['grpNbr']) + " updated sucessfully!",
                                 status=status.HTTP_200_OK)
