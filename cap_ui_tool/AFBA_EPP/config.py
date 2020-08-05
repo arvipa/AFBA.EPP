@@ -63,3 +63,5 @@ QUESTIONS = {
 PRODUCT_QUESTIONS = {'FPPG': 'fppGqstn', 'FPPI': 'fppIqstn', 'VOL_CI': 'voL_CIqstn', 'VGL': 'vgLqstn'}
 
 PRODUCT_ACTIVE = {'FPPG': 'isFPPGActive', 'FPPI': 'isFPPIActive', 'VOL_CI': 'isVOL_CIActive', 'VGL': 'isVGLActive'}
+
+IS_ACTIVE_QUESTION = {"isFPPGActive": "fppGqstn", "isVOL_CIActive": "voL_CIqstn", "isVGLActive": "vgLqstn", "isFPPIActive": "fppIqstn",}

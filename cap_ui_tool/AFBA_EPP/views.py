@@ -18,7 +18,8 @@ from AFBA_EPP.serializers import (EppActionSerializer, EppProductSerializer,
                                   EppGrpmstrSerializer, EppGrpmstrPostSerializers,
                                   EppCrtGrpmstrSerializer, EppGrpAgentSerializer)
 from AFBA_EPP.config import (PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE,
-                             PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE, PLAN_PROD_CD_MAP, REVERSE_PLAN_PROD_CD_MAP)
+                             PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE, PLAN_PROD_CD_MAP, REVERSE_PLAN_PROD_CD_MAP,
+                             IS_ACTIVE_QUESTION)
 from AFBA_EPP.utils import add_product_attr, add_question_attr
 
 
@@ -338,8 +339,8 @@ class EppCreateGrpList(generics.CreateAPIView):
                                          usr_tkn=request.data['acctMgrEmailAddrs'],
                                          case_tkn=request.data['acctMgrEmailAddrs'])
                 grpMstrMthd.save()
-                i = 0
-                self.AddAgentDet(request.data, i)
+                for agnt in request.data['grpAgents']:
+                    self.AddAgentDet(request.data, agnt)
                 self.AddBulkData(request.data)
                 return Response("Group No. " + str(request.data['grpNbr']) + " updated sucessfully!",
                                 status=status.HTTP_200_OK)
@@ -392,6 +393,8 @@ class EppCreateGrpList(generics.CreateAPIView):
         :param data: dictionary containing data
         :return: No data.
         """
+        f1 = DateRand()
+        todayDt = f1.getCurntUtcTime()
         prd_cd_keys = ("emp_ProductCode", "sp_ProductCode", "ch_ProductCode")
         is_active_keys = IS_ACTIVE.keys()
         for act_key in is_active_keys:
@@ -433,67 +436,104 @@ class EppCreateGrpList(generics.CreateAPIView):
                             bulk_id=DateRand().randgen(), grpprdct=epp_grp_prd, value=prd_dict[aatr],
                             attr=prd_attr[0], action=EppAction.objects.get(action_id=10001), crtd_dt=data['crtdDt'],
                             crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'], lst_updt_by=data['lstUpdtBy'])
-                        print("bulk_ref", bulk_ref)
+                        # print("bulk_ref", bulk_ref)
+                if data.get('grpPrdqstn', False):
+                    question_data = data.get('grpPrdqstn')
+                    # check_question_flag = question_data.get(act_key, False)
+                    prd_question_data = question_data[IS_ACTIVE_QUESTION[act_key]]
+                    if prd_question_data:
+                        # prd_question_data = question_data[IS_ACTIVE_QUESTION[act_key]]
+                        ch_val, emp_val, sp_val = prd_question_data['ch_action'], prd_question_data['emp_action'], \
+                                                  prd_question_data['sp_action']
+                        for rec_key, rec_val in prd_question_data.items():
+                            if rec_key not in ('ch_action', 'sp_action', 'emp_action', 'grpprdctId'):
+                                action_rec = ''
+                                prd_attr_insert = EppAttribute.objects.filter(db_attr_nm=rec_key, is_qstn_attrbt='Y')
+                                if 'emp_' in rec_key:
+                                    action_rec = emp_val
+                                elif 'ch_' in rec_key:
+                                    action_rec = ch_val
+                                else:
+                                    action_rec = sp_val
+                                if prd_attr_insert.exists():
+                                    bulk_ref = EppBulkreftbl.objects.create(
+                                        bulk_id=DateRand().randgen(),
+                                        grpprdct=epp_grp_prd,
+                                        value=rec_val, attr=prd_attr_insert[0],
+                                        action=EppAction.objects.get(action_id=action_rec),
+                                        crtd_dt=todayDt.strftime('%Y-%m-%d'), crtd_by='Batch',
+                                        lst_updt_dt=todayDt.strftime('%Y-%m-%d'), lst_updt_by='Batch')
                 print("start code of insert")
 
 
 class BulkQuestionsList(generics.ListAPIView):
     def get(self, request, grpNbr):
-        return_data = OrderedDict()
+        return_data = {}
         group_nbr = self.kwargs['grpNbr']
         group_data = EppGrpmstr.objects.filter(grp_nbr=group_nbr).select_related()
-        group_dict = list(group_data.values())[0]
-        # Using group_id from group data dict get all group products.
-        grp_prd_data = EppGrpprdct.objects.filter(grp=group_dict['grp_id'])
-        grp_prod_lst = list(grp_prd_data.values())
-        # Use loop to add product and its bulk data and attributes in return data.
-        pr_key_list = []
-        return_data.update({'grpNbr': self.kwargs['grpNbr']})
-        for grprd_data in grp_prod_lst:
-            prd_data = EppProduct.objects.filter(product_id=grprd_data['product_id'])
-            prd_dict = list(prd_data.values())[0]
-            pr_key = PRODUCT_QUESTIONS.get(prd_dict['product_nm'])
-            if pr_key:
-                pr_key_list.append(prd_dict['product_nm'])
-                bulk_data = EppBulkreftbl.objects.filter(grpprdct=grprd_data['grpprdct_id'])
-                bulk_data_lst = list(bulk_data.values())
-                prd_attr_list = [(
-                    list(EppAttribute.objects.filter(attr_id=blk_dat['attr_id'], is_qstn_attrbt='Y').values()),
-                    blk_dat['value'], blk_dat['action_id'])
-                    for blk_dat in bulk_data_lst if
-                    list(EppAttribute.objects.filter(attr_id=blk_dat['attr_id'], is_qstn_attrbt='Y').values())]
+        if group_data:
+            group_dict = list(group_data.values())[0]
+            # Using group_id from group data dict get all group products.
+            grp_prd_data = EppGrpprdct.objects.filter(grp=group_dict['grp_id'])
+            grp_prod_lst = list(grp_prd_data.values())
+            # Use loop to add product and its bulk data and attributes in return data.
+            pr_key_list = []
+            return_data.update({'grpNbr': self.kwargs['grpNbr']})
+            for grprd_data in grp_prod_lst:
+                prd_data = EppProduct.objects.filter(product_id=grprd_data['product_id'])
+                prd_dict = list(prd_data.values())[0]
+                pr_key = PRODUCT_QUESTIONS.get(prd_dict['product_nm'])
+                if pr_key:
+                    pr_key_list.append(prd_dict['product_nm'])
+                    bulk_data = EppBulkreftbl.objects.filter(grpprdct=grprd_data['grpprdct_id'])
+                    bulk_data_lst = list(bulk_data.values())
+                    prd_attr_list = [(
+                        list(EppAttribute.objects.filter(attr_id=blk_dat['attr_id'], is_qstn_attrbt='Y').values()),
+                        blk_dat['value'], blk_dat['action_id'])
+                        for blk_dat in bulk_data_lst if
+                        list(EppAttribute.objects.filter(attr_id=blk_dat['attr_id'], is_qstn_attrbt='Y').values())]
 
-                if prd_attr_list:
-                    prd_attr_conf = QUESTIONS.get(pr_key, ())
-                    add_question_attr(return_data, pr_key, prd_attr_conf)
-                    return_data.update({PRODUCT_ACTIVE[prd_dict['product_nm']]: True})
-                    return_data.setdefault(pr_key, {}).update({'grpprdctId': str(grprd_data['grpprdct_id'])})
-                    emp_count, sp_count, ch_count = 0, 0, 0
-                    action_dict = {}
-                    for prd_attr in prd_attr_list:
-                        db_attr_name = prd_attr[0][0]['db_attr_nm']
-                        db_attr_value = prd_attr[1]
-                        if ('emp_' in db_attr_name) and (emp_count == 0):
-                            emp_count = 1
-                            action_dict.update({'emp_action': prd_attr[2]})
-                        if ('sp_' in db_attr_name) and (sp_count == 0):
-                            sp_count = 1
-                            action_dict.update({'sp_action': prd_attr[2]})
-                        if ('ch_' in db_attr_name) and (ch_count == 0):
-                            ch_count = 1
-                            action_dict.update({'ch_action': prd_attr[2]})
-                        return_data.setdefault(pr_key, {}).update({db_attr_name: db_attr_value})
-                    return_data.setdefault(pr_key, {}).update(action_dict)
-                else:
-                    return_data.setdefault(pr_key, None)
-                    return_data.update({PRODUCT_ACTIVE.get(prd_dict['product_nm']): False})
-        if pr_key_list:
-            all_pr_key = [k for k in PRODUCT_QUESTIONS]
-            diff_pr = [set(all_pr_key) - set(pr_key_list)][0]
-            if diff_pr:
-                for pr in diff_pr:
-                    return_data.update({PRODUCT_ACTIVE.get(pr): False})
-                    return_data.update({PRODUCT_QUESTIONS.get(pr): None})
+                    if prd_attr_list:
+                        prd_attr_conf = QUESTIONS.get(pr_key, ())
+                        add_question_attr(return_data, pr_key, prd_attr_conf)
+                        return_data.update({PRODUCT_ACTIVE[prd_dict['product_nm']]: True})
+                        return_data.setdefault(pr_key, {}).update({'grpprdctId': str(grprd_data['grpprdct_id'])})
+                        emp_count, sp_count, ch_count = 0, 0, 0
+                        action_dict = {}
+                        for prd_attr in prd_attr_list:
+                            db_attr_name = prd_attr[0][0]['db_attr_nm']
+                            db_attr_value = prd_attr[1]
+                            if ('emp_' in db_attr_name) and (emp_count == 0):
+                                emp_count = 1
+                                action_dict.update({'emp_action': str(prd_attr[2])})
+                            if ('sp_' in db_attr_name) and (sp_count == 0):
+                                sp_count = 1
+                                action_dict.update({'sp_action': str(prd_attr[2])})
+                            if ('ch_' in db_attr_name) and (ch_count == 0):
+                                ch_count = 1
+                                action_dict.update({'ch_action': str(prd_attr[2])})
+                            return_data.setdefault(pr_key, {}).update({db_attr_name: db_attr_value})
+                        return_data.setdefault(pr_key, {}).update(action_dict)
+                    else:
+                        return_data.setdefault(pr_key, None)
+                        return_data.update({PRODUCT_ACTIVE.get(prd_dict['product_nm']): False})
+                        # add_question_attr(return_data, pr_key, prd_attr_conf)
+            if pr_key_list:
+                all_pr_key = [k for k in PRODUCT_QUESTIONS]
+                diff_pr = [set(all_pr_key) - set(pr_key_list)][0]
+                if diff_pr:
+                    for pr in diff_pr:
+                        return_data.update({PRODUCT_ACTIVE.get(pr): False})
+                        return_data.update({PRODUCT_QUESTIONS.get(pr): None})
+        else:
+            return_data = {"isFPPIActive": False,
+                           "isFPPGActive": False,
+                           "isVOL_CIActive": False,
+                           "isVGLActive": False,
+                           "fppGqstn": None,
+                           "fppIqstn": None,
+                           "voL_CIqstn": None,
+                           "vgLqstn": None}
         return Response(return_data)
 
 
