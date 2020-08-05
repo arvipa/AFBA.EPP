@@ -14,10 +14,18 @@ IS_ACTIVE = {
     "isFPPIActive": "fppi",
 }
 
-RESPONSE_KEY = {"fppg": "fppg", "hi": "hi", "acc": "acc", "er_ci": "eR_CI",
-                "vol_ci": "voL_CI", "vgl": "vgl", "bgl": "bgl", "fppi": "fppi"}
-
 IS_ACTIVE_REVERSE = {value: key for key, value in IS_ACTIVE.items()}
+
+RESPONSE_KEY = {
+    "fppg": "fppg",
+    "hi": "hi",
+    "acc": "acc",
+    "er_ci": "eR_CI",
+    "vol_ci": "voL_CI",
+    "vgl": "vgl",
+    "bgl": "bgl",
+    "fppi": "fppi"
+}
 
 PRODUCTS = {
     "fppg": ("effctv_dt", "grp_situs_state", "emp_gi_max_amt", "sp_gi_max_amt",
