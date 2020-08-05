@@ -46,7 +46,7 @@ class EppErrormessageSerializer(serializers.ModelSerializer):
 
 
 class EppAgentsSerializer(serializers.ModelSerializer):
-    agentId = serializers.IntegerField(source='agent_id')
+    agentId = serializers.CharField(source='agent_id')
     agntNbr = serializers.CharField(source='agnt_nbr')
     agntNm = serializers.CharField(source='agnt_nm')
     agntSubCnt = serializers.CharField(source='agnt_sub_cnt')
