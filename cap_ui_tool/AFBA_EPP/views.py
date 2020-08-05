@@ -17,7 +17,7 @@ from AFBA_EPP.serializers import (EppActionSerializer, EppProductSerializer,
                                   EppGrppymntmdSerializer, EppErrormessageSerializer,
                                   EppGrpmstrSerializer, EppGrpmstrPostSerializers,
                                   EppCrtGrpmstrSerializer, EppGrpAgentSerializer)
-from AFBA_EPP.config import (PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE,
+from AFBA_EPP.config import (PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE, RESPONSE_KEY,
                              PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE, PLAN_PROD_CD_MAP, REVERSE_PLAN_PROD_CD_MAP,
                              IS_ACTIVE_QUESTION)
 from AFBA_EPP.utils import add_product_attr, add_question_attr
@@ -150,12 +150,14 @@ class EppGrpmstrPostList(generics.ListAPIView):
             prd_dict = list(prd_data.values())[0]
             # print("prd_dict >>> ", prd_dict)
             pr_key = prd_dict['product_nm'].lower()
-            return_data.setdefault(pr_key, {})
+            response_isactive_prd_name = IS_ACTIVE_REVERSE[pr_key]
+            response_prd_key_name = RESPONSE_KEY[pr_key]
+            return_data.setdefault(response_prd_key_name, {})
             # Creat active key in return data.
-            return_data.setdefault(IS_ACTIVE_REVERSE[pr_key], True)
+            return_data.setdefault(response_isactive_prd_name, True)
             # From configuration get all attributes required within the product.
-            prd_attr_conf = PRODUCTS.get(pr_key, ())
-            add_product_attr(return_data, pr_key, prd_attr_conf)
+            # prd_attr_conf = PRODUCTS.get(pr_key, ())
+            # add_product_attr(return_data, pr_key, prd_attr_conf)
             bulk_data = EppBulkreftbl.objects.filter(grpprdct=grprd_data['grpprdct_id'])
             bulk_data_lst = list(bulk_data.values())
             for blk_dat in bulk_data_lst:
@@ -164,13 +166,13 @@ class EppGrpmstrPostList(generics.ListAPIView):
                 if prd_attr_list:
                     db_attr_name = prd_attr_list[0]['db_attr_nm']
                     db_attr_value = blk_dat['value']
-                    return_data.setdefault(pr_key, {}).update({db_attr_name: db_attr_value})
+                    return_data.setdefault(response_prd_key_name, {}).update({db_attr_name: db_attr_value})
                     if REVERSE_PLAN_PROD_CD_MAP.get(db_attr_name, None):
                         return_data.setdefault(
-                            pr_key, {}).update({REVERSE_PLAN_PROD_CD_MAP[db_attr_name]: db_attr_value})
+                            response_prd_key_name, {}).update({REVERSE_PLAN_PROD_CD_MAP[db_attr_name]: db_attr_value})
                     db_attr_name_action = db_attr_name + "_action"
                     db_attr_value_action = str(blk_dat['action_id'])
-                    return_data.setdefault(pr_key, {}).update({db_attr_name_action: db_attr_value_action})
+                    return_data.setdefault(response_prd_key_name, {}).update({db_attr_name_action: db_attr_value_action})
         return Response(return_data)
 
 
@@ -254,7 +256,7 @@ class EppCreateGrpList(generics.CreateAPIView):
 
                             except Exception:
                                 print("Error while updating:", sys.exc_info()[0])
-                            prd_detail = request.data[prod_name]
+                            prd_detail = request.data[RESPONSE_KEY[prod_name]]
                             print("prd_detail: ", prd_detail)
                             for prd_key in prd_cd_keys:
                                 prdCd_lst = list(EppProductcodes.objects.filter(product_id=prd_dict['product_id'], \
@@ -272,7 +274,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                             all_attr = prd_detail.keys()
                             for aatr in all_attr:
                                 print(aatr)
-                                prd_dict = request.data[IS_ACTIVE[act_key]]
+                                prd_dict = request.data[RESPONSE_KEY[IS_ACTIVE[act_key]]]
                                 print('prd_dict: ', prd_dict)
                                 prd_attr = EppAttribute.objects.filter(db_attr_nm=aatr, is_qstn_attrbt="N")
                                 print('prd_attr: ', prd_attr)
@@ -289,7 +291,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                                                 (bulk_id=blkData_data['bulk_id'], \
                                                  grpprdct=grpprd_data['grpprdct_id'],
                                                  attr=prd_attr[0].attr_id).update \
-                                                (value=prd_dict[aatr] if prd_dict[aatr].strip() else None,
+                                                (value=prd_dict[aatr] if prd_dict[aatr] and prd_dict[aatr].strip() else None,
                                                  attr=prd_attr[0].attr_id,
                                                  action=EppAction.objects.get(action_id=10001),
                                                  lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
@@ -405,6 +407,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                 # Using product name get product ID.
                 prd_data = EppProduct.objects.filter(product_nm=prod_name.upper())
                 prd_dict = list(prd_data.values())[0]
+                prd_detail = data[RESPONSE_KEY[prod_name]]
                 # Create EPP_GRPPRDCT data.
                 grpprdct_id = DateRand().randgen()
                 effctv_dt = DateRand().getCurntUtcTime().strftime('%Y-%m-%d')
@@ -416,7 +419,6 @@ class EppCreateGrpList(generics.CreateAPIView):
                         lst_updt_by=data['lstUpdtBy'], effctv_dt=effctv_dt)
                 except Exception:
                     return Response("Error while inserting into EppGrpprdct", status=status.HTTP_400_BAD_REQUEST)
-                prd_detail = data[prod_name]
                 # Insert first EPP_ProductCode data.
                 for prd_key in prd_cd_keys:
                     if prd_detail.get(prd_key, None):
@@ -429,14 +431,15 @@ class EppCreateGrpList(generics.CreateAPIView):
                 # New product attributes in parameters so get its attr and insert its values.
                 all_attr = prd_detail.keys()
                 for aatr in all_attr:
-                    prd_dict = data[IS_ACTIVE[act_key]]
+                    prd_dict = data[RESPONSE_KEY[IS_ACTIVE[act_key]]]
                     prd_attr = EppAttribute.objects.filter(db_attr_nm=aatr, is_qstn_attrbt="N")
                     if prd_attr.exists():
                         bulk_ref = EppBulkreftbl.objects.create(
                             bulk_id=DateRand().randgen(), grpprdct=epp_grp_prd, value=prd_dict[aatr],
                             attr=prd_attr[0], action=EppAction.objects.get(action_id=10001), crtd_dt=data['crtdDt'],
                             crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'], lst_updt_by=data['lstUpdtBy'])
-                        # print("bulk_ref", bulk_ref)
+                        print("bulk_ref", bulk_ref)
+                        print("aatr ", aatr)
                 if data.get('grpPrdqstn', False):
                     question_data = data.get('grpPrdqstn')
                     # check_question_flag = question_data.get(act_key, False)
