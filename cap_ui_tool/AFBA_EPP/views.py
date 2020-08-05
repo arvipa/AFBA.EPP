@@ -213,22 +213,19 @@ class EppCreateGrpList(generics.CreateAPIView):
                  case_tkn=request.data['case_token'], lst_updt_dt=request.data['lstUpdtDt'],
                  lst_updt_by=request.data['lstUpdtBy'])
 
-            i = 0
-            while (i < len(request.data['grpAgents'])):
-                print(request.data['grpAgents'][i])
-
-                if EppAgents.objects.filter(grp=request.data['grpId']).exists():
-                    if EppAgents.objects.filter(agent_id=request.data['grpAgents'][i]['agentId']).exists():
-
-                        EppAgents.objects.filter(agent_id=request.data['grpAgents'][i]['agentId']).update \
-                            (agnt_nbr=request.data['grpAgents'][i]['agntNbr'], \
-                             agnt_nm=request.data['grpAgents'][i]['agntNm'], \
-                             agnt_sub_cnt=request.data['grpAgents'][i]['agntSubCnt'], \
-                             agnt_comsn_splt=request.data['grpAgents'][i]['agntComsnSplt'], \
-                             lst_updt_dt=request.data['lstUpdtDt'], lst_updt_by=request.data['lstUpdtBy'])
-                    else:
-                        self.AddAgentDet(request.data, i)
-                i = i + 1
+            for agnt in request.data['grpAgents']:
+                print(agnt)
+                if agnt['agentId']:
+                    if EppAgents.objects.filter(grp=request.data['grpId'], agent_id=agnt['agentId']).exists():
+                        EppAgents.objects.filter(
+                            agent_id=agnt['agentId']).update(agnt_nbr=agnt['agntNbr'],
+                                                             agnt_nm=agnt['agntNm'],
+                                                             agnt_sub_cnt=agnt['agntSubCnt'],
+                                                             agnt_comsn_splt=agnt['agntComsnSplt'],
+                                                             lst_updt_dt=request.data['lstUpdtDt'],
+                                                             lst_updt_by=request.data['lstUpdtBy'])
+                else:
+                    self.AddAgentDet(request.data, agnt)
             print("Before grpprdct logic")
 
             if EppGrpprdct.objects.filter(grp=request.data['grpId']).exists():
@@ -350,19 +347,17 @@ class EppCreateGrpList(generics.CreateAPIView):
                 return Response("Error while inserting into Erpgrpmstr", status=status.HTTP_400_BAD_REQUEST)
         return Response("Error", status=status.HTTP_400_BAD_REQUEST)
 
-    def AddAgentDet(self, data, i):
+    def AddAgentDet(self, data, agent):
         try:
             f3 = DateRand()
             todayDt = f3.getCurntUtcTime()
             grpId_fk = EppGrpmstr.objects.get(pk=data['grpId'])
             print('Before Agentmthd')
-            Agentmthd = EppAgents(agent_id=f3.randgen(), agnt_nbr=data['grpAgents'][i]['agntNbr'], \
-                                  agnt_nm=data['grpAgents'][i]['agntNm'],
-                                  agnt_sub_cnt=data['grpAgents'][i]['agntSubCnt'], \
-                                  agnt_comsn_splt=data['grpAgents'][i]['agntComsnSplt'], grp=grpId_fk, \
+            Agentmthd = EppAgents(agent_id=f3.randgen(), agnt_nbr=agent['agntNbr'],
+                                  agnt_nm=agent['agntNm'], agnt_sub_cnt=agent['agntSubCnt'],
+                                  agnt_comsn_splt=agent['agntComsnSplt'], grp=grpId_fk,
                                   crtd_dt=todayDt.strftime('%Y-%m-%d'), crtd_by='Batch')
             Agentmthd.save()
-
         except Exception:
             return Response("Error while inserting into EppAgents", status=status.HTTP_400_BAD_REQUEST)
 
