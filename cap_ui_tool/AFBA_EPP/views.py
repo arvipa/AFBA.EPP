@@ -328,7 +328,7 @@ class EppCreateGrpList(generics.CreateAPIView):
         # serializer = EppCrtGrpmstrSerializer(grp_mastr, data=request.data)
         if True:
             try:
-                grpMstrMthd = EppGrpmstr(grp_id=request.data['grpId'], grp_nbr=request.data['grpNbr'], \
+                grpMstrMthd = EppGrpmstr.objects.create(grp_id=request.data['grpId'], grp_nbr=request.data['grpNbr'], \
                                          grp_nm=request.data['grpNm'], grp_efftv_dt=request.data['grpEfftvDt'], \
                                          grp_situs_st=request.data['grpSitusSt'], actv_flg=request.data['actvFlg'], \
                                          grpPymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk, \
@@ -338,7 +338,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                                          acct_mgr_email_addrs=request.data['acctMgrEmailAddrs'], \
                                          usr_tkn=request.data['user_token'],
                                          case_tkn=request.data['case_token'])
-                grpMstrMthd.save()
+                request.data['group_instance'] = grpMstrMthd
                 for agnt in request.data['grpAgents']:
                     self.AddAgentDet(request.data, agnt)
                 self.AddBulkData(request.data)
@@ -411,7 +411,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                 effctv_dt = DateRand().getCurntUtcTime().strftime('%Y-%m-%d')
                 try:
                     epp_grp_prd = EppGrpprdct.objects.create(
-                        grpprdct_id=grpprdct_id, grp=EppGrpmstr.objects.get(grp_id=data['grpId']),
+                        grpprdct_id=grpprdct_id, grp=data['group_instance'],
                         product=EppProduct.objects.get(product_id=prd_dict['product_id']),
                         crtd_dt=data['crtdDt'], crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'],
                         lst_updt_by=data['lstUpdtBy'], effctv_dt=effctv_dt)
