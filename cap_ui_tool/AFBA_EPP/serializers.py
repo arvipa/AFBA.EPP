@@ -44,6 +44,15 @@ class EppErrormessageSerializer(serializers.ModelSerializer):
         model = EppErrormessage
         fields = ('errmsgId', 'errmsgDesc')
 
+class EppErrorUpmessageSerializer(serializers.ModelSerializer):
+    errmsgId = serializers.IntegerField(source='errmsg_id',read_only=True)
+    errmsgDesc = serializers.CharField(source='errmsg_desc',read_only=True)
+    errorMessageView = EppErrormessageSerializer(many=True)
+
+    class Meta:
+        model = EppErrormessage
+        fields = ('errmsgId', 'errmsgDesc','errorMessageView')
+
 
 class EppAgentsSerializer(serializers.ModelSerializer):
     agentId = serializers.CharField(source='agent_id')

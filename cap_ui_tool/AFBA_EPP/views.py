@@ -16,7 +16,8 @@ from AFBA_EPP.models import (EppAction, EppProduct, EppGrppymntmd, EppErrormessa
 from AFBA_EPP.serializers import (EppActionSerializer, EppProductSerializer,
                                   EppGrppymntmdSerializer, EppErrormessageSerializer,
                                   EppGrpmstrSerializer, EppGrpmstrPostSerializers,
-                                  EppCrtGrpmstrSerializer, EppGrpAgentSerializer)
+                                  EppCrtGrpmstrSerializer, EppGrpAgentSerializer,
+                                  EppErrorUpmessageSerializer)
 from AFBA_EPP.config import (PRODUCTS, IS_ACTIVE, QUESTIONS, PRODUCT_ACTIVE, RESPONSE_KEY,
                              PRODUCT_QUESTIONS, IS_ACTIVE_REVERSE, PLAN_PROD_CD_MAP, REVERSE_PLAN_PROD_CD_MAP,
                              IS_ACTIVE_QUESTION)
@@ -113,12 +114,24 @@ class EppErrormessageList(APIView):
         return Response(data)
 
 class EppUpdErrormessageList(generics.CreateAPIView):
-    serializer_class = EppErrormessageSerializer
+    serializer_class = EppErrorUpmessageSerializer
     def post(self, request):
         print(request.data)
-        for agnt in request.data:
-            print(agnt)
-
+        error_list = list(request.data['errorMessageView'])
+        f1 = DateRand()
+        todayDt = f1.getCurntUtcTime()
+        for agnt in error_list:
+            print(agnt['errmsgId'])
+            print(agnt['errmsgDesc'])
+            try:
+                if EppErrormessage.objects.filter(errmsg_id=agnt['errmsgId']).exists() and not EppErrormessage.objects.filter(errmsg_desc=agnt['errmsgDesc']).exists():
+                        EppErrormessage.objects.filter(errmsg_id=agnt['errmsgId']).update \
+                            (errmsg_id=agnt['errmsgId'],
+                             errmsg_desc=agnt['errmsgDesc'],
+                            lst_updt_dt=todayDt.strftime('%Y-%m-%d'), lst_updt_by='Batch')
+            except Exception:
+                print("Error while updating:", sys.exc_info()[0])
+        return Response(" updated sucessfully!",status=status.HTTP_200_OK)
 class EppGrpmstrList(APIView):
     def get(self, request):
         grouppy_data = EppGrpmstr.objects.all()
