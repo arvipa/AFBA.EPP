@@ -412,20 +412,23 @@ class EppCreateGrpList(generics.CreateAPIView):
                 try:
                     epp_grp_prd = EppGrpprdct.objects.create(
                         grpprdct_id=grpprdct_id, grp=data['group_instance'],
-                        product=EppProduct.objects.get(product_id=prd_dict['product_id']),
+                        product=prd_data[0],
                         crtd_dt=data['crtdDt'], crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'],
                         lst_updt_by=data['lstUpdtBy'], effctv_dt=effctv_dt)
                 except Exception:
                     return Response("Error while inserting into EppGrpprdct", status=status.HTTP_400_BAD_REQUEST)
                 # Insert first EPP_ProductCode data.
+                prd_cd_insert_lst = []
                 for prd_key in prd_cd_keys:
                     if prd_detail.get(prd_key, None):
-                        prd_cd = EppProductcodes.objects.create(
+                        prd_cd = EppProductcodes(
                             prodct_cd_id=DateRand().randgen(), product_code=prd_detail[prd_key],
-                            product=EppProduct.objects.get(product_id=prd_dict['product_id']),
+                            product=prd_data[0],
                             optn=prd_key[:2].upper(), crtd_dt=data['crtdDt'],
                             crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'], lst_updt_by=data['lstUpdtBy'])
                         prd_detail[PLAN_PROD_CD_MAP[prd_key]] = prd_detail[prd_key]
+                        prd_cd_insert_lst.append(prd_cd)
+                EppProductcodes.objects.bulk_create(prd_cd_insert_lst)
                 # New product attributes in parameters so get its attr and insert its values.
                 all_attr = prd_detail.keys()
                 bulk_attr_insert_list = [] # Using models bulk_create to try and insert all attributes at once.
