@@ -443,7 +443,10 @@ class EppCreateGrpList(generics.CreateAPIView):
                 if data.get('grpPrdqstn', False):
                     question_data = data.get('grpPrdqstn')
                     # check_question_flag = question_data.get(act_key, False)
-                    prd_question_data = question_data[IS_ACTIVE_QUESTION[act_key]]
+                    if IS_ACTIVE_QUESTION.get(act_key, None):
+                        prd_question_data = question_data[IS_ACTIVE_QUESTION[act_key]]
+                    else:
+                        prd_question_data = None
                     if prd_question_data:
                         # prd_question_data = question_data[IS_ACTIVE_QUESTION[act_key]]
                         ch_val, emp_val, sp_val = prd_question_data['ch_action'], prd_question_data['emp_action'], \
