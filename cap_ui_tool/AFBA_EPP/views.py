@@ -338,8 +338,8 @@ class EppCreateGrpList(generics.CreateAPIView):
                                          lst_updt_dt=request.data['lstUpdtDt'], lst_updt_by=request.data['lstUpdtBy'], \
                                          occ_class=request.data['occClass'], acct_mgr_nm=request.data['acctMgrNm'], \
                                          acct_mgr_email_addrs=request.data['acctMgrEmailAddrs'], \
-                                         usr_tkn=request.data['acctMgrEmailAddrs'],
-                                         case_tkn=request.data['acctMgrEmailAddrs'])
+                                         usr_tkn=request.data['user_token'],
+                                         case_tkn=request.data['case_token'])
                 grpMstrMthd.save()
                 for agnt in request.data['grpAgents']:
                     self.AddAgentDet(request.data, agnt)
@@ -430,16 +430,19 @@ class EppCreateGrpList(generics.CreateAPIView):
                         prd_detail[PLAN_PROD_CD_MAP[prd_key]] = prd_detail[prd_key]
                 # New product attributes in parameters so get its attr and insert its values.
                 all_attr = prd_detail.keys()
+                bulk_attr_insert_list = [] # Using models bulk_create to try and insert all attributes at once.
                 for aatr in all_attr:
                     prd_dict = data[RESPONSE_KEY[IS_ACTIVE[act_key]]]
                     prd_attr = EppAttribute.objects.filter(db_attr_nm=aatr, is_qstn_attrbt="N")
                     if prd_attr.exists():
-                        bulk_ref = EppBulkreftbl.objects.create(
+                        bulk_ref = EppBulkreftbl(
                             bulk_id=DateRand().randgen(), grpprdct=epp_grp_prd, value=prd_dict[aatr],
                             attr=prd_attr[0], action=EppAction.objects.get(action_id=10001), crtd_dt=data['crtdDt'],
                             crtd_by=data['crtdBy'], lst_updt_dt=data['lstUpdtDt'], lst_updt_by=data['lstUpdtBy'])
+                        bulk_attr_insert_list.append(bulk_ref)
                         print("bulk_ref", bulk_ref)
                         print("aatr ", aatr)
+                EppBulkreftbl.objects.bulk_create(bulk_attr_insert_list)
                 if data.get('grpPrdqstn', False):
                     question_data = data.get('grpPrdqstn')
                     # check_question_flag = question_data.get(act_key, False)
