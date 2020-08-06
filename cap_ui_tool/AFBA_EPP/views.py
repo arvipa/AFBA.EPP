@@ -112,6 +112,12 @@ class EppErrormessageList(APIView):
         data = EppErrormessageSerializer(error_data, many=True).data
         return Response(data)
 
+class EppUpdErrormessageList(generics.CreateAPIView):
+    serializer_class = EppErrormessageSerializer
+    def post(self, request):
+        print(request.data)
+        for agnt in request.data:
+            print(agnt)
 
 class EppGrpmstrList(APIView):
     def get(self, request):
