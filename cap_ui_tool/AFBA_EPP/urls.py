@@ -1,5 +1,5 @@
 from .views import EppActionList, EppProductList, EppGrppymntmdList, SitusStateSerializerList, EppErrormessageList, \
-    EppGrpmstrList, EppGrpmstrPostList, EppCreateGrpList, BulkQuestionsList, BulkQuestionAddList
+    EppGrpmstrList, EppGrpmstrPostList, EppCreateGrpList, BulkQuestionsList,CloneTemplt, BulkQuestionAddList
 from django.urls import path
 
 urlpatterns = [
@@ -13,5 +13,6 @@ urlpatterns = [
     path("GroupSetup/EppCreateGrpSetup", EppCreateGrpList.as_view(), name="CreateGrp_list"),
     path("GroupSetup/grpNbr/<str:grpNbr>/", EppGrpmstrPostList.as_view(), name="GroupPayment_list"),
     path("Custom/bulkqstn/grpNbr/<str:grpNbr>/", BulkQuestionsList.as_view(), name="Bulkquestion_list"),
+    path("Custom/clonetemplate/grpNbr/<str:grpNbr>/", CloneTemplt.as_view(), name="CloneTemplt_lists"),
     path("Custom/UpdateBulkQstn", BulkQuestionAddList.as_view(), name="CreateBulkQue_list"),
 ]
