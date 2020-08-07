@@ -478,37 +478,41 @@ class EppCreateGrpList(generics.CreateAPIView):
                         print("bulk_ref", bulk_ref)
                         print("aatr ", aatr)
                 EppBulkreftbl.objects.bulk_create(bulk_attr_insert_list)
-                if data.get('grpPrdqstn', False):
-                    question_data = data.get('grpPrdqstn')
-                    # check_question_flag = question_data.get(act_key, False)
-                    if IS_ACTIVE_QUESTION.get(act_key, None):
-                        prd_question_data = question_data[IS_ACTIVE_QUESTION[act_key]]
-                    else:
-                        prd_question_data = None
-                    if prd_question_data:
-                        # prd_question_data = question_data[IS_ACTIVE_QUESTION[act_key]]
-                        ch_val, emp_val, sp_val = prd_question_data['ch_action'], prd_question_data['emp_action'], \
-                                                  prd_question_data['sp_action']
-                        for rec_key, rec_val in prd_question_data.items():
-                            if rec_key not in ('ch_action', 'sp_action', 'emp_action', 'grpprdctId'):
-                                action_rec = ''
-                                prd_attr_insert = EppAttribute.objects.filter(db_attr_nm=rec_key, is_qstn_attrbt='Y')
-                                if 'emp_' in rec_key:
-                                    action_rec = emp_val
-                                elif 'ch_' in rec_key:
-                                    action_rec = ch_val
-                                else:
-                                    action_rec = sp_val
-                                if prd_attr_insert.exists():
-                                    bulk_ref = EppBulkreftbl.objects.create(
-                                        bulk_id=DateRand().randgen(),
-                                        grpprdct=epp_grp_prd,
-                                        value=rec_val, attr=prd_attr_insert[0],
-                                        action=EppAction.objects.get(action_id=action_rec),
-                                        crtd_dt=todayDt.strftime('%Y-%m-%d'), crtd_by='Batch',
-                                        lst_updt_dt=todayDt.strftime('%Y-%m-%d'), lst_updt_by='Batch')
+                self.CustomBlkUpdate(data,epp_grp_prd,act_key)
                 print("start code of insert")
 
+    def CustomBlkUpdate(self,data,epp_grp_prd,act_key):
+        f1 = DateRand()
+        todayDt = f1.getCurntUtcTime()
+        if data.get('grpPrdqstn', False):
+            question_data = data.get('grpPrdqstn')
+            # check_question_flag = question_data.get(act_key, False)
+            if IS_ACTIVE_QUESTION.get(act_key, None):
+                prd_question_data = question_data[IS_ACTIVE_QUESTION[act_key]]
+            else:
+                prd_question_data = None
+            if prd_question_data:
+                # prd_question_data = question_data[IS_ACTIVE_QUESTION[act_key]]
+                ch_val, emp_val, sp_val = prd_question_data['ch_action'], prd_question_data['emp_action'], \
+                                          prd_question_data['sp_action']
+                for rec_key, rec_val in prd_question_data.items():
+                    if rec_key not in ('ch_action', 'sp_action', 'emp_action', 'grpprdctId'):
+                        action_rec = ''
+                        prd_attr_insert = EppAttribute.objects.filter(db_attr_nm=rec_key, is_qstn_attrbt='Y')
+                        if 'emp_' in rec_key:
+                            action_rec = emp_val
+                        elif 'ch_' in rec_key:
+                            action_rec = ch_val
+                        else:
+                            action_rec = sp_val
+                        if prd_attr_insert.exists():
+                            bulk_ref = EppBulkreftbl.objects.create(
+                                bulk_id=DateRand().randgen(),
+                                grpprdct=epp_grp_prd,
+                                value=rec_val, attr=prd_attr_insert[0],
+                                action=EppAction.objects.get(action_id=action_rec),
+                                crtd_dt=todayDt.strftime('%Y-%m-%d'), crtd_by='Batch',
+                                lst_updt_dt=todayDt.strftime('%Y-%m-%d'), lst_updt_by='Batch')
 
 class BulkQuestionsList(generics.ListAPIView):
     def get(self, request, grpNbr):
