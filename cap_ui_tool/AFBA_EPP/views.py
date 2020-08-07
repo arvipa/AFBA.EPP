@@ -113,25 +113,34 @@ class EppErrormessageList(APIView):
         data = EppErrormessageSerializer(error_data, many=True).data
         return Response(data)
 
+
 class EppUpdErrormessageList(generics.CreateAPIView):
     serializer_class = EppErrorUpmessageSerializer
+
     def post(self, request):
-        print(request.data)
         error_list = list(request.data['errorMessageView'])
         f1 = DateRand()
         todayDt = f1.getCurntUtcTime()
-        for agnt in error_list:
-            print(agnt['errmsgId'])
-            print(agnt['errmsgDesc'])
-            try:
-                if EppErrormessage.objects.filter(errmsg_id=agnt['errmsgId']).exists() and not EppErrormessage.objects.filter(errmsg_desc=agnt['errmsgDesc']).exists():
-                        EppErrormessage.objects.filter(errmsg_id=agnt['errmsgId']).update \
-                            (errmsg_id=agnt['errmsgId'],
-                             errmsg_desc=agnt['errmsgDesc'],
-                            lst_updt_dt=todayDt.strftime('%Y-%m-%d'), lst_updt_by='Batch')
-            except Exception:
-                print("Error while updating:", sys.exc_info()[0])
-        return Response(" updated sucessfully!",status=status.HTTP_200_OK)
+        errObj = list(EppErrormessage.objects.all())
+        err_len = len(errObj)
+        try:
+            for i in range(err_len):
+                errObj[i].errmsg_id = error_list[i]['errmsgId']
+                errObj[i].errmsg_desc = error_list[i]['errmsgDesc']
+                errObj[i].lst_updt_dt = todayDt.strftime('%Y-%m-%d')
+                errObj[i].lst_updt_by = 'Batch'
+         #  for errMsg in error_list:
+         #     EppErrormessage.objects.filter(errmsg_id=errMsg['errmsgId']).update \
+         #               (errmsg_id=errMsg['errmsgId'],
+         #               errmsg_desc=errMsg['errmsgDesc'],
+         #                lst_updt_dt=todayDt.strftime('%Y-%m-%d'), lst_updt_by='Batch')
+         #   print(err)
+            EppErrormessage.objects.bulk_update(errObj,fields=['errmsg_desc','lst_updt_dt','lst_updt_by'])
+        except Exception:
+            print("Error while updating:", sys.exc_info()[0])
+        return Response(" updated sucessfully!", status=status.HTTP_200_OK)
+
+
 class EppGrpmstrList(APIView):
     def get(self, request):
         grouppy_data = EppGrpmstr.objects.all()
@@ -191,7 +200,8 @@ class EppGrpmstrPostList(generics.ListAPIView):
                             response_prd_key_name, {}).update({REVERSE_PLAN_PROD_CD_MAP[db_attr_name]: db_attr_value})
                     db_attr_name_action = db_attr_name + "_action"
                     db_attr_value_action = str(blk_dat['action_id'])
-                    return_data.setdefault(response_prd_key_name, {}).update({db_attr_name_action: db_attr_value_action})
+                    return_data.setdefault(response_prd_key_name, {}).update(
+                        {db_attr_name_action: db_attr_value_action})
         return Response(return_data)
 
 
@@ -236,7 +246,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                  lst_updt_by=request.data['lstUpdtBy'])
 
             for agnt in request.data['grpAgents']:
-            #    print(agnt)
+                #    print(agnt)
                 if agnt['agentId']:
                     if EppAgents.objects.filter(grp=request.data['grpId'], agent_id=agnt['agentId']).exists():
                         EppAgents.objects.filter(
@@ -262,7 +272,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                             print("Product that should be updated is >>> ", prod_name)
                             prd_data = EppProduct.objects.filter(product_nm=prod_name.upper())
                             prd_dict = list(prd_data.values())[0]
-                            #print("prd_dict: ", prd_dict)
+                            # print("prd_dict: ", prd_dict)
                             grpprdct_id = grpprd_data['grpprdct_id']
                             effctv_dt = grpprd_data['effctv_dt']
                             try:
@@ -296,19 +306,20 @@ class EppCreateGrpList(generics.CreateAPIView):
                                 prd_dict = request.data[RESPONSE_KEY[IS_ACTIVE[act_key]]]
                                 print('prd_dict: ', prd_dict)
                                 prd_attr = EppAttribute.objects.filter(db_attr_nm=aatr, is_qstn_attrbt="N")
-                            #    print('prd_attr: ', prd_attr)
+                                #    print('prd_attr: ', prd_attr)
                                 if prd_attr.exists():
                                     blkData_lst = list(EppBulkreftbl.objects.filter(grpprdct=grpprd_data['grpprdct_id'], \
                                                                                     attr=prd_attr[0].attr_id).values())
                                     if EppBulkreftbl.objects.filter(grpprdct=grpprd_data['grpprdct_id'], \
                                                                     attr=prd_attr[0].attr_id).exists():
                                         for blkData_data in blkData_lst:
-                            #                print("In bl ref loop", count)
+                                            #                print("In bl ref loop", count)
                                             bulk_ref = EppBulkreftbl.objects.filter \
                                                 (bulk_id=blkData_data['bulk_id'], \
                                                  grpprdct=grpprd_data['grpprdct_id'],
                                                  attr=prd_attr[0].attr_id).update \
-                                                (value=prd_dict[aatr] if prd_dict[aatr] and prd_dict[aatr].strip() else None,
+                                                (value=prd_dict[aatr] if prd_dict[aatr] and prd_dict[
+                                                    aatr].strip() else None,
                                                  attr=prd_attr[0].attr_id,
                                                  action=EppAction.objects.get(action_id=10001),
                                                  lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
@@ -348,15 +359,19 @@ class EppCreateGrpList(generics.CreateAPIView):
         if True:
             try:
                 grpMstrMthd = EppGrpmstr.objects.create(grp_id=request.data['grpId'], grp_nbr=request.data['grpNbr'], \
-                                         grp_nm=request.data['grpNm'], grp_efftv_dt=request.data['grpEfftvDt'], \
-                                         grp_situs_st=request.data['grpSitusSt'], actv_flg=request.data['actvFlg'], \
-                                         grpPymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk, \
-                                         crtd_dt=request.data['crtdDt'], crtd_by=request.data['crtdBy'], \
-                                         lst_updt_dt=request.data['lstUpdtDt'], lst_updt_by=request.data['lstUpdtBy'], \
-                                         occ_class=request.data['occClass'], acct_mgr_nm=request.data['acctMgrNm'], \
-                                         acct_mgr_email_addrs=request.data['acctMgrEmailAddrs'], \
-                                         usr_tkn=request.data['user_token'],
-                                         case_tkn=request.data['case_token'])
+                                                        grp_nm=request.data['grpNm'],
+                                                        grp_efftv_dt=request.data['grpEfftvDt'], \
+                                                        grp_situs_st=request.data['grpSitusSt'],
+                                                        actv_flg=request.data['actvFlg'], \
+                                                        grpPymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk, \
+                                                        crtd_dt=request.data['crtdDt'], crtd_by=request.data['crtdBy'], \
+                                                        lst_updt_dt=request.data['lstUpdtDt'],
+                                                        lst_updt_by=request.data['lstUpdtBy'], \
+                                                        occ_class=request.data['occClass'],
+                                                        acct_mgr_nm=request.data['acctMgrNm'], \
+                                                        acct_mgr_email_addrs=request.data['acctMgrEmailAddrs'], \
+                                                        usr_tkn=request.data['user_token'],
+                                                        case_tkn=request.data['case_token'])
                 request.data['group_instance'] = grpMstrMthd
                 for agnt in request.data['grpAgents']:
                     self.AddAgentDet(request.data, agnt)
@@ -450,7 +465,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                 EppProductcodes.objects.bulk_create(prd_cd_insert_lst)
                 # New product attributes in parameters so get its attr and insert its values.
                 all_attr = prd_detail.keys()
-                bulk_attr_insert_list = [] # Using models bulk_create to try and insert all attributes at once.
+                bulk_attr_insert_list = []  # Using models bulk_create to try and insert all attributes at once.
                 for aatr in all_attr:
                     prd_dict = data[RESPONSE_KEY[IS_ACTIVE[act_key]]]
                     prd_attr = EppAttribute.objects.filter(db_attr_nm=aatr, is_qstn_attrbt="N")
@@ -493,6 +508,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                                         crtd_dt=todayDt.strftime('%Y-%m-%d'), crtd_by='Batch',
                                         lst_updt_dt=todayDt.strftime('%Y-%m-%d'), lst_updt_by='Batch')
                 print("start code of insert")
+
 
 class BulkQuestionsList(generics.ListAPIView):
     def get(self, request, grpNbr):
@@ -564,6 +580,7 @@ class BulkQuestionsList(generics.ListAPIView):
                            "vgLqstn": None}
         return Response(return_data)
 
+
 class CloneTemplt(generics.ListAPIView):
     def get(self, request, grpNbr):
         return_data = OrderedDict()
@@ -574,24 +591,25 @@ class CloneTemplt(generics.ListAPIView):
         grp_prod_lst = list(grp_prd_data.values())
         for grprd_data in grp_prod_lst:
             prd_data = EppProduct.objects.filter(product_id=grprd_data['product_id'])
-            prd_dict =(list(prd_data.values()))
+            prd_dict = (list(prd_data.values()))
             print(grprd_data['grpprdct_id'])
             print(prd_dict[0]['product_nm'])
-            return_data.setdefault('configuredProduct',[]).append({'grpprdct_id':str(grprd_data['grpprdct_id']),\
-                                                                   'product_nm':prd_dict[0]['product_nm']})
+            return_data.setdefault('configuredProduct', []).append({'grpprdct_id': str(grprd_data['grpprdct_id']), \
+                                                                    'product_nm': prd_dict[0]['product_nm']})
             prdAttr_lst = EppPrdctattrbt.objects.filter(grpprdct=grprd_data['grpprdct_id'])
 
             for prdAttr_data in list(prdAttr_lst.values()):
                 print(prdAttr_data)
                 Attr_lst = EppAttribute.objects.filter(attr_id=prdAttr_data['attr_id'])
                 for Attr_data in list(Attr_lst.values()):
-                    return_data.setdefault('selectedList',[]).append({'prdctAttrbtId':str(prdAttr_data['prdct_attrbt_id']),
-                                                                  'dbAttrNm':Attr_data['db_attr_nm'],
-                                                                  'displyAttrNm':Attr_data['disply_attr_nm'],
-                                                                  'attrId':prdAttr_data['attr_id'],
-                                                                  'rqdFlg': True if prdAttr_data['rqd_flg'] == 'Y' else False,
-                                                                  'clmnOrdr':prdAttr_data['clmn_ordr'],
-                                                                  'grpprdct_id':str(grprd_data['grpprdct_id'])})
+                    return_data.setdefault('selectedList', []).append(
+                        {'prdctAttrbtId': str(prdAttr_data['prdct_attrbt_id']),
+                         'dbAttrNm': Attr_data['db_attr_nm'],
+                         'displyAttrNm': Attr_data['disply_attr_nm'],
+                         'attrId': prdAttr_data['attr_id'],
+                         'rqdFlg': True if prdAttr_data['rqd_flg'] == 'Y' else False,
+                         'clmnOrdr': prdAttr_data['clmn_ordr'],
+                         'grpprdct_id': str(grprd_data['grpprdct_id'])})
 
         return Response(return_data)
 
