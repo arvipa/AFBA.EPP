@@ -3,7 +3,7 @@ import sys
 import random as rand
 from collections import OrderedDict
 from datetime import datetime, timezone
-
+from django.db import connection
 # Related third-party imports.
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -112,12 +112,15 @@ class EppErrormessageList(APIView):
         data = EppErrormessageSerializer(error_data, many=True).data
         return Response(data)
 
+
 class EppUpdErrormessageList(generics.CreateAPIView):
     serializer_class = EppErrormessageSerializer
+
     def post(self, request):
         print(request.data)
         for agnt in request.data:
             print(agnt)
+
 
 class EppGrpmstrList(APIView):
     def get(self, request):
@@ -178,7 +181,8 @@ class EppGrpmstrPostList(generics.ListAPIView):
                             response_prd_key_name, {}).update({REVERSE_PLAN_PROD_CD_MAP[db_attr_name]: db_attr_value})
                     db_attr_name_action = db_attr_name + "_action"
                     db_attr_value_action = str(blk_dat['action_id'])
-                    return_data.setdefault(response_prd_key_name, {}).update({db_attr_name_action: db_attr_value_action})
+                    return_data.setdefault(response_prd_key_name, {}).update(
+                        {db_attr_name_action: db_attr_value_action})
         return Response(return_data)
 
 
@@ -223,7 +227,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                  lst_updt_by=request.data['lstUpdtBy'])
 
             for agnt in request.data['grpAgents']:
-            #    print(agnt)
+                #    print(agnt)
                 if agnt['agentId']:
                     if EppAgents.objects.filter(grp=request.data['grpId'], agent_id=agnt['agentId']).exists():
                         EppAgents.objects.filter(
@@ -249,7 +253,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                             print("Product that should be updated is >>> ", prod_name)
                             prd_data = EppProduct.objects.filter(product_nm=prod_name.upper())
                             prd_dict = list(prd_data.values())[0]
-                            #print("prd_dict: ", prd_dict)
+                            # print("prd_dict: ", prd_dict)
                             grpprdct_id = grpprd_data['grpprdct_id']
                             effctv_dt = grpprd_data['effctv_dt']
                             try:
@@ -283,19 +287,20 @@ class EppCreateGrpList(generics.CreateAPIView):
                                 prd_dict = request.data[RESPONSE_KEY[IS_ACTIVE[act_key]]]
                                 print('prd_dict: ', prd_dict)
                                 prd_attr = EppAttribute.objects.filter(db_attr_nm=aatr, is_qstn_attrbt="N")
-                            #    print('prd_attr: ', prd_attr)
+                                #    print('prd_attr: ', prd_attr)
                                 if prd_attr.exists():
                                     blkData_lst = list(EppBulkreftbl.objects.filter(grpprdct=grpprd_data['grpprdct_id'], \
                                                                                     attr=prd_attr[0].attr_id).values())
                                     if EppBulkreftbl.objects.filter(grpprdct=grpprd_data['grpprdct_id'], \
                                                                     attr=prd_attr[0].attr_id).exists():
                                         for blkData_data in blkData_lst:
-                            #                print("In bl ref loop", count)
+                                            #                print("In bl ref loop", count)
                                             bulk_ref = EppBulkreftbl.objects.filter \
                                                 (bulk_id=blkData_data['bulk_id'], \
                                                  grpprdct=grpprd_data['grpprdct_id'],
                                                  attr=prd_attr[0].attr_id).update \
-                                                (value=prd_dict[aatr] if prd_dict[aatr] and prd_dict[aatr].strip() else None,
+                                                (value=prd_dict[aatr] if prd_dict[aatr] and prd_dict[
+                                                    aatr].strip() else None,
                                                  attr=prd_attr[0].attr_id,
                                                  action=EppAction.objects.get(action_id=10001),
                                                  lst_updt_dt=todayDt.strftime('%Y-%m-%d'),
@@ -335,15 +340,19 @@ class EppCreateGrpList(generics.CreateAPIView):
         if True:
             try:
                 grpMstrMthd = EppGrpmstr.objects.create(grp_id=request.data['grpId'], grp_nbr=request.data['grpNbr'], \
-                                         grp_nm=request.data['grpNm'], grp_efftv_dt=request.data['grpEfftvDt'], \
-                                         grp_situs_st=request.data['grpSitusSt'], actv_flg=request.data['actvFlg'], \
-                                         grpPymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk, \
-                                         crtd_dt=request.data['crtdDt'], crtd_by=request.data['crtdBy'], \
-                                         lst_updt_dt=request.data['lstUpdtDt'], lst_updt_by=request.data['lstUpdtBy'], \
-                                         occ_class=request.data['occClass'], acct_mgr_nm=request.data['acctMgrNm'], \
-                                         acct_mgr_email_addrs=request.data['acctMgrEmailAddrs'], \
-                                         usr_tkn=request.data['user_token'],
-                                         case_tkn=request.data['case_token'])
+                                                        grp_nm=request.data['grpNm'],
+                                                        grp_efftv_dt=request.data['grpEfftvDt'], \
+                                                        grp_situs_st=request.data['grpSitusSt'],
+                                                        actv_flg=request.data['actvFlg'], \
+                                                        grpPymn=pymnt_fk, enrlmnt_prtnrs=enrollment_fk, \
+                                                        crtd_dt=request.data['crtdDt'], crtd_by=request.data['crtdBy'], \
+                                                        lst_updt_dt=request.data['lstUpdtDt'],
+                                                        lst_updt_by=request.data['lstUpdtBy'], \
+                                                        occ_class=request.data['occClass'],
+                                                        acct_mgr_nm=request.data['acctMgrNm'], \
+                                                        acct_mgr_email_addrs=request.data['acctMgrEmailAddrs'], \
+                                                        usr_tkn=request.data['user_token'],
+                                                        case_tkn=request.data['case_token'])
                 request.data['group_instance'] = grpMstrMthd
                 for agnt in request.data['grpAgents']:
                     self.AddAgentDet(request.data, agnt)
@@ -437,7 +446,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                 EppProductcodes.objects.bulk_create(prd_cd_insert_lst)
                 # New product attributes in parameters so get its attr and insert its values.
                 all_attr = prd_detail.keys()
-                bulk_attr_insert_list = [] # Using models bulk_create to try and insert all attributes at once.
+                bulk_attr_insert_list = []  # Using models bulk_create to try and insert all attributes at once.
                 for aatr in all_attr:
                     prd_dict = data[RESPONSE_KEY[IS_ACTIVE[act_key]]]
                     prd_attr = EppAttribute.objects.filter(db_attr_nm=aatr, is_qstn_attrbt="N")
@@ -480,6 +489,7 @@ class EppCreateGrpList(generics.CreateAPIView):
                                         crtd_dt=todayDt.strftime('%Y-%m-%d'), crtd_by='Batch',
                                         lst_updt_dt=todayDt.strftime('%Y-%m-%d'), lst_updt_by='Batch')
                 print("start code of insert")
+
 
 class BulkQuestionsList(generics.ListAPIView):
     def get(self, request, grpNbr):
@@ -551,36 +561,80 @@ class BulkQuestionsList(generics.ListAPIView):
                            "vgLqstn": None}
         return Response(return_data)
 
+
 class CloneTemplt(generics.ListAPIView):
     def get(self, request, grpNbr):
-        return_data = OrderedDict()
         group_nbr = self.kwargs['grpNbr']
-        group_data = EppGrpmstr.objects.filter(grp_nbr=group_nbr).select_related()
-        group_dict = list(group_data.values())[0]
-        grp_prd_data = EppGrpprdct.objects.filter(grp=group_dict['grp_id'])
-        grp_prod_lst = list(grp_prd_data.values())
-        for grprd_data in grp_prod_lst:
-            prd_data = EppProduct.objects.filter(product_id=grprd_data['product_id'])
-            prd_dict =(list(prd_data.values()))
-            print(grprd_data['grpprdct_id'])
-            print(prd_dict[0]['product_nm'])
-            return_data.setdefault('configuredProduct',[]).append({'grpprdct_id':str(grprd_data['grpprdct_id']),\
-                                                                   'product_nm':prd_dict[0]['product_nm']})
-            prdAttr_lst = EppPrdctattrbt.objects.filter(grpprdct=grprd_data['grpprdct_id'])
+        return_dict = {
+            "availableProduct": [],
+            "configuredProduct": [],
+            "availableList": [],
+            "selectedList": []
+        }
+        cursor = connection.cursor()
+        data_dict = {}
+        data_attr_lst = []
+        config_product_list = []
+        if group_nbr == 'undefined':
+            return Response("", status=status.HTTP_200_OK)
+        try:
+            grp_no = EppGrpmstr.objects.get(grp_nbr=group_nbr).grp_id
+            cursor.execute(''' SELECT * FROM "EPP_GRPPRDCT" where grp_id=%s ''', [grp_no])
+            mstrgrp_data = cursor.fetchall()
+        except (EppGrpmstr.DoesNotExist, EppGrpprdct.DoesNotExist) as e:
+            return Response("incorrect group number or product id ", status=status.HTTP_404_NOT_FOUND)
+        for data in mstrgrp_data:
+            cursor.execute('''select * from "EPP_Product" where product_id = %s''', [data[2]])
+            product_list = cursor.fetchall()
+            cursor.execute('''SELECT "EPP_PRDCTATTRBT".prdct_attrbt_id, "EPP_Attribute".db_attr_nm, 
+                                    "EPP_Attribute".disply_attr_nm, "EPP_PRDCTATTRBT".attr_id, "EPP_PRDCTATTRBT".rqd_flg,
+                                    "EPP_PRDCTATTRBT".clmn_ordr, "EPP_GRPPRDCT".grpprdct_id
+                                     FROM "EPP_GRPPRDCT" INNER JOIN "EPP_PRDCTATTRBT" 
+                                    on  "EPP_GRPPRDCT". grpprdct_id = "EPP_PRDCTATTRBT".grpprdct_id 
+                                    INNER JOIN "EPP_Attribute" on "EPP_Attribute".attr_id = "EPP_PRDCTATTRBT".attr_id
+                                    where "EPP_GRPPRDCT".grpprdct_id = %s ''', [data[0]])
+            product_attribute = cursor.fetchall()
+            if product_attribute:
+                return_dict["configuredProduct"].append(
+                    {'grpprdctId': data[0], 'productNm': product_list[0][1]})
+                config_product_list.append(str(data[0]))
+                data_dict[product_list[0][1]] = product_attribute
+                data_attr_lst.append([str(attr[3]) for attr in product_attribute])
+        common_attribute = set.intersection(*map(set, data_attr_lst))
+        cursor.execute('''SELECT "EPP_PRDCTATTRBT".prdct_attrbt_id, "EPP_Attribute".db_attr_nm, 
+                                            "EPP_Attribute".disply_attr_nm, "EPP_PRDCTATTRBT".attr_id, "EPP_PRDCTATTRBT".rqd_flg,
+                                            "EPP_PRDCTATTRBT".clmn_ordr, "EPP_GRPPRDCT".grpprdct_id
+                                             FROM "EPP_GRPPRDCT" INNER JOIN "EPP_PRDCTATTRBT" 
+                                            on  "EPP_GRPPRDCT". grpprdct_id = "EPP_PRDCTATTRBT".grpprdct_id 
+                                            INNER JOIN "EPP_Attribute" on "EPP_Attribute".attr_id = "EPP_PRDCTATTRBT".attr_id
+                                            where "EPP_PRDCTATTRBT".attr_id in %s  
+                                            and "EPP_GRPPRDCT".grpprdct_id = %s  order by "EPP_PRDCTATTRBT".clmn_ordr''',
+                       [tuple(common_attribute), config_product_list[0]])
+        common_prd_attribute = cursor.fetchall()
+        all_common_product = []
+        for prd_attr in common_prd_attribute:
+            all_common_product.append({'prdctAttrbtId': prd_attr[0],
+                                       'dbAttrNm': prd_attr[1],
+                                       'displyAttrNm': prd_attr[2],
+                                       'attrId': prd_attr[3],
+                                       'rqdFlg': True if prd_attr[4] == 'Y' else False,
+                                       'clmnOrdr': prd_attr[5],
+                                       'grpprdct_id': prd_attr[6]})
 
-            for prdAttr_data in list(prdAttr_lst.values()):
-                print(prdAttr_data)
-                Attr_lst = EppAttribute.objects.filter(attr_id=prdAttr_data['attr_id'])
-                for Attr_data in list(Attr_lst.values()):
-                    return_data.setdefault('selectedList',[]).append({'prdctAttrbtId':str(prdAttr_data['prdct_attrbt_id']),
-                                                                  'dbAttrNm':Attr_data['db_attr_nm'],
-                                                                  'displyAttrNm':Attr_data['disply_attr_nm'],
-                                                                  'attrId':prdAttr_data['attr_id'],
-                                                                  'rqdFlg': True if prdAttr_data['rqd_flg'] == 'Y' else False,
-                                                                  'clmnOrdr':prdAttr_data['clmn_ordr'],
-                                                                  'grpprdct_id':str(grprd_data['grpprdct_id'])})
-
-        return Response(return_data)
+        return_dict["selectedList"].extend(all_common_product)
+        for prd_key, prd_val in data_dict.items():
+            config_prd_attr_lst = []
+            for rec in prd_val:
+                if str(rec[3]) not in common_attribute:
+                    config_prd_attr_lst.append({'prdctAttrbtId': rec[0],
+                                                'dbAttrNm': rec[1],
+                                                'displyAttrNm': rec[2],
+                                                'attrId': rec[3],
+                                                'rqdFlg': True if rec[4] == 'Y' else False,
+                                                'clmnOrdr': rec[5],
+                                                'grpprdct_id': rec[6]})
+        return_dict["selectedList"].extend(config_prd_attr_lst)
+        return Response(return_dict)
 
 
 class BulkQuestionAddList(generics.CreateAPIView):
@@ -633,3 +687,160 @@ class BulkQuestionAddList(generics.CreateAPIView):
                                 status=status.HTTP_400_BAD_REQUEST)
         except Exception:
             return Response("Error while inserting in BulRef Table", status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomGroupNumberData(generics.GenericAPIView):
+    def get(self, request, grpNbr):
+        group_nbr = self.kwargs['grpNbr']
+        return_dict = {
+            "availableProduct": [],
+            "configuredProduct": [],
+            "availableList": [],
+            "selectedList": []
+        }
+        cursor = connection.cursor()
+        data_dict = {}
+        data_attr_lst = []
+        config_product_list = []
+        if group_nbr == 'undefined':
+            return Response("", status=status.HTTP_200_OK)
+        try:
+            grp_no = EppGrpmstr.objects.get(grp_nbr=group_nbr).grp_id
+            cursor.execute(''' SELECT * FROM "EPP_GRPPRDCT" where grp_id=%s ''', [grp_no])
+            mstrgrp_data = cursor.fetchall()
+        except (EppGrpmstr.DoesNotExist, EppGrpprdct.DoesNotExist) as e:
+            return Response("incorrect group number or product id ", status=status.HTTP_404_NOT_FOUND)
+        for data in mstrgrp_data:
+            cursor.execute('''select * from "EPP_Product" where product_id = %s''', [data[2]])
+            product_list = cursor.fetchall()
+            return_dict["availableProduct"].append({"grpprdctId": data[0],
+                                                    "productNm": product_list[0][1]})
+            cursor.execute('''SELECT "EPP_PRDCTATTRBT".prdct_attrbt_id, "EPP_Attribute".db_attr_nm, 
+                            "EPP_Attribute".disply_attr_nm, "EPP_PRDCTATTRBT".attr_id, "EPP_PRDCTATTRBT".rqd_flg,
+                            "EPP_PRDCTATTRBT".clmn_ordr, "EPP_GRPPRDCT".grpprdct_id
+                             FROM "EPP_GRPPRDCT" INNER JOIN "EPP_PRDCTATTRBT" 
+                            on  "EPP_GRPPRDCT". grpprdct_id = "EPP_PRDCTATTRBT".grpprdct_id 
+                            INNER JOIN "EPP_Attribute" on "EPP_Attribute".attr_id = "EPP_PRDCTATTRBT".attr_id
+                            where "EPP_GRPPRDCT".grpprdct_id = %s ''', [data[0]])
+            product_attribute = cursor.fetchall()
+            if product_attribute:
+                return_dict["configuredProduct"].append(
+                    {'grpprdctId': data[0], 'productNm': product_list[0][1]})
+                config_product_list.append(str(data[0]))
+                data_dict[product_list[0][1]] = product_attribute
+                data_attr_lst.append([str(attr[3]) for attr in product_attribute])
+        if data_attr_lst:
+            common_attribute = set.intersection(*map(set, data_attr_lst))
+            cursor.execute('''SELECT "EPP_PRDCTATTRBT".prdct_attrbt_id, "EPP_Attribute".db_attr_nm, 
+                                        "EPP_Attribute".disply_attr_nm, "EPP_PRDCTATTRBT".attr_id, "EPP_PRDCTATTRBT".rqd_flg,
+                                        "EPP_PRDCTATTRBT".clmn_ordr, "EPP_GRPPRDCT".grpprdct_id
+                                         FROM "EPP_GRPPRDCT" INNER JOIN "EPP_PRDCTATTRBT" 
+                                        on  "EPP_GRPPRDCT". grpprdct_id = "EPP_PRDCTATTRBT".grpprdct_id 
+                                        INNER JOIN "EPP_Attribute" on "EPP_Attribute".attr_id = "EPP_PRDCTATTRBT".attr_id
+                                        where "EPP_PRDCTATTRBT".attr_id in %s  
+                                        and "EPP_GRPPRDCT".grpprdct_id = %s  order by "EPP_PRDCTATTRBT".clmn_ordr''',
+                           [tuple(common_attribute), config_product_list[0]])
+            common_prd_attribute = cursor.fetchall()
+            all_common_product = []
+            for prd_attr in common_prd_attribute:
+                all_common_product.append({'prdctAttrbtId': prd_attr[0],
+                                           'dbAttrNm': prd_attr[1],
+                                           'displyAttrNm': prd_attr[2],
+                                           'attrId': prd_attr[3],
+                                           'rqdFlg': True if prd_attr[4] == 'Y' else False,
+                                           'clmnOrdr': prd_attr[5],
+                                           'grpprdct_id': prd_attr[6]})
+
+            return_dict["selectedList"].extend(all_common_product)
+            for prd_key, prd_val in data_dict.items():
+                config_prd_attr_lst = []
+                for rec in prd_val:
+                    if str(rec[3]) not in common_attribute:
+                        config_prd_attr_lst.append({'prdctAttrbtId': rec[0],
+                                                    'dbAttrNm': rec[1],
+                                                    'displyAttrNm': rec[2],
+                                                    'attrId': rec[3],
+                                                    'rqdFlg': True if rec[4] == 'Y' else False,
+                                                    'clmnOrdr': rec[5],
+                                                    'grpprdct_id': rec[6]})
+            return_dict["selectedList"].extend(config_prd_attr_lst)
+            all_attribute_union = sorted(set().union(*data_attr_lst))
+            cursor.execute(
+                ''' SELECT "EPP_Attribute".attr_id FROM "EPP_Attribute" where "EPP_Attribute".is_visible_for_tmlt = 'Y' ''')
+            prd_attribute_all = [str(i[0]) for i in list(cursor.fetchall())]
+            available_attribute = sorted(list(set(prd_attribute_all) - set(all_attribute_union)))
+
+            cursor.execute('''select "EPP_Attribute".db_attr_nm, "EPP_Attribute".disply_attr_nm, "EPP_Attribute".attr_id
+                                      from "EPP_Attribute" WHERE "EPP_Attribute".attr_id in %s''',
+                           [tuple(available_attribute)])
+            get_avl_attr = cursor.fetchall()
+            available_attr_list = []
+            for avl_attr in get_avl_attr:
+                available_attr_list.append({"prdctAttrbtId": None,
+                                            "dbAttrNm": avl_attr[0],
+                                            "displyAttrNm": avl_attr[1],
+                                            "attrId": avl_attr[2],
+                                            "rqdFlg": False,
+                                            "clmnOrdr": None,
+                                            "grpprdctId": None})
+            return_dict["availableList"].extend(available_attr_list)
+        else:
+            prd_available_attr_list = []
+            cursor.execute('''select "EPP_Attribute".db_attr_nm, "EPP_Attribute".disply_attr_nm, "EPP_Attribute".attr_id
+                                                  from "EPP_Attribute" WHERE "EPP_Attribute".is_visible_for_tmlt = 'Y' ''')
+            prd_avl_attribute_all = cursor.fetchall()
+            for prd_avl_attr in prd_avl_attribute_all:
+                prd_available_attr_list.append({"prdctAttrbtId": None,
+                                                "dbAttrNm": prd_avl_attr[0],
+                                                "displyAttrNm": prd_avl_attr[1],
+                                                "attrId": prd_avl_attr[2],
+                                                "rqdFlg": False,
+                                                "clmnOrdr": None,
+                                                "grpprdctId": None})
+            return_dict["availableList"].extend(prd_available_attr_list)
+        return Response(return_dict)
+
+
+class EppGetTemplateFields(generics.GenericAPIView):
+    def get(self, request):
+        all_attributes = EppAttribute.objects.filter(is_visible_for_tmlt='Y').order_by('db_attr_nm')
+        attribute_list = []
+        for data in all_attributes:
+            attribute_list.append({"prdctAttrbtId": None,
+                                   "dbAttrNm": data.db_attr_nm,
+                                   "displyAttrNm": None,
+                                   "attrId": None,
+                                   "rqdFlg": False,
+                                   "clmnOrdr": None,
+                                   "grpprdctId": None})
+
+        return Response(attribute_list)
+
+
+class EppAddPrdctAttrbt(generics.CreateAPIView):
+
+    def post(self, request):
+        f1 = DateRand()
+        todayDt = f1.getCurntUtcTime()
+        # try:
+        group_product_ids = request.data.get('grpprdctIds')
+        for rec in group_product_ids:
+            prd_attr_del = EppPrdctattrbt.objects.filter(grpprdct=rec).order_by('clmn_ordr')
+            prd_attr_del.delete()
+        product_attr_data = request.data.get('eppPrdAttrFields')
+        prd_attr_insert_list = []
+        for data in product_attr_data:
+            prd_attr_rec = EppPrdctattrbt(prdct_attrbt_id=data['prdctAttrbtId'],
+                                          attr=EppAttribute.objects.get(attr_id=data['attrId']),
+                                          grpprdct=EppGrpprdct.objects.get(grpprdct_id=str(data['grpprdctId'])),
+                                          rqd_flg='Y' if data['rqdFlg'] else 'N', clmn_ordr=data['clmnOrdr'],
+                                          crtd_dt=DateRand().getCurntUtcTime().strftime('%Y-%m-%d'),
+                                          crtd_by="Batch",
+                                          lst_updt_dt=DateRand().getCurntUtcTime().strftime(
+                                              '%Y-%m-%d'), lst_updt_by="Batch")
+            prd_attr_insert_list.append(prd_attr_rec)
+        EppPrdctattrbt.objects.bulk_create(prd_attr_insert_list)
+        return Response("Template for group" + request.data.get('grpNbr') + " created successfully!",
+                        status=status.HTTP_200_OK)
+        # except Exception:
+        #     return Response("Error while inserting in EppPrdctattrbt Table", status=status.HTTP_400_BAD_REQUEST)
